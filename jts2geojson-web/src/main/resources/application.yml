@@ -1,0 +1,38 @@
+server:
+  port: 8083
+  tomcat:
+    uri-encoding: UTF-8
+  servlet:
+    context-path: /${spring.application.name}
+spring:
+  datasource:
+      url: jdbc:postgresql://localhost:5432/gis
+      username: postgres
+      password: postgres
+      driver-class-name: org.postgresql.Driver
+      sql-script-encoding: utf-8
+      type: com.zaxxer.hikari.HikariDataSource
+      hikari:
+        connection-timeout: 30000
+        idle-timeout: 60000
+        max-lifetime: 1800000
+        maximum-pool-size: 60
+        minimum-idle: 0
+  application:
+    name: jts2geojson
+  thymeleaf:
+    encoding: UTF-8
+    cache: false
+    mode: LEGACYHTML5
+beetlsql:
+  sqlPath: /sql
+  nameConversion: org.beetl.sql.core.UnderlinedNameConversion
+  daoSuffix: Dao
+  basePackage: org.fengsoft.jts2geojson.dao
+  dbStyle: org.beetl.sql.core.db.PostgresStyle
+beetl-beetlsql: dev=falsetemplatesPath
+beetl:
+  suffix: html
+  templatesPath: templates
+
+

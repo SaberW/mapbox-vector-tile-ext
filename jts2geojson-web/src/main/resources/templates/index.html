@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="${ctxPath}/lib/openlayers/ol.css">
+    <script>
+        var contextPath = "${ctxPath}";
+    </script>
+    <script src="${ctxPath}/lib/require.min.js" data-main="${ctxPath}/main.js"></script>
+    <style>
+        #map {
+            width: 600px;
+            height: 500px;
+            border: 1px solid red;
+        }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+    require(['./lib/openlayers/ol', './model/map'])
+</script>
+</body>
+</html>
