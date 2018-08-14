@@ -19,7 +19,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
-    <name>jts2geojson</name>
+    <name>mapbox-vector-tile-ext</name>
     <description>Demo project for Spring Boot</description>
 
     <properties>
