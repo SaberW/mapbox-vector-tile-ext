@@ -26,7 +26,7 @@ public class BeetlGenerate {
         SQLReady sqlReady = new SQLReady("SELECT  tablename   FROM   pg_tables t where t.schemaname='public'");
         List<String> tabNames = sqlManager.execute(sqlReady, String.class);
         tabNames.clear();
-        tabNames.add("water_line");
+        tabNames.add("poi_village");
         for (String string : tabNames) {
             try {
                 sqlManager.genPojoCode(string,"");
