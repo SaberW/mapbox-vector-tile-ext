@@ -7,10 +7,7 @@
         var contextPath = "${ctxPath}";
     </script>
 
-    <link rel="stylesheet" href="${ctxPath}/lib/openlayers/ol.css">
-    <link rel="stylesheet" href="${ctxPath}/lib/bootstrap/css/bootstrap.min.css">
-
-    <script src="${ctxPath}/lib/require.min.js" data-main="${ctxPath}/main.js"></script>
+    <script  data-main="${ctxPath}/main.js" src="${ctxPath}/lib/require.min.js"></script>
     <style>
         body, html {
             height: 100%;
@@ -37,9 +34,5 @@
         <div class="col-md-4"></div>
     </div>
 </div>
-
-<script>
-    require(['jQuery', 'ol', 'bootstrap', './model/map'])
-</script>
 </body>
 </html>
