@@ -1,6 +1,7 @@
 package org.fengsoft.jts2geojson.web;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.fengsoft.jts2geojson.common.AnotherException;
 import org.fengsoft.jts2geojson.convert.web.VectorTileController;
 import org.fengsoft.jts2geojson.services.WaterLineServices;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,7 @@ public class WaterLineController extends VectorTileController {
             method = {RequestMethod.POST, RequestMethod.GET},
             produces = MediaType.APPLICATION_OCTET_STREAM_VALUE
     )
+    @ExceptionHandler(AnotherException.class)
     public String getLine2(@RequestParam("srsname") String srsname,
                          @RequestParam("layerName") String layerName,
                          @PathVariable("x") Integer x,
