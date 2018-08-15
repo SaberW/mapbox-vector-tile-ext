@@ -3,23 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
-    <link rel="stylesheet" href="${ctxPath}/lib/openlayers/ol.css">
     <script>
         var contextPath = "${ctxPath}";
     </script>
+
+    <link rel="stylesheet" href="${ctxPath}/lib/openlayers/ol.css">
+    <link rel="stylesheet" href="${ctxPath}/lib/bootstrap/css/bootstrap.min.css">
+
     <script src="${ctxPath}/lib/require.min.js" data-main="${ctxPath}/main.js"></script>
     <style>
+        body, html {
+            height: 100%;
+            padding: 0px;
+            margin: 0px;
+        }
+
+        .viewport {
+            padding: 0 15px;
+            height: 100%;
+
+        }
+
         #map {
             width: 600px;
-            height: 500px;
-            border: 1px solid red;
+            height: 100%;
         }
     </style>
 </head>
 <body>
-<div id="map"></div>
+<div class="viewport">
+    <div class="row" style="height: 100%;">
+        <div class="col-md-8" id="map"></div>
+        <div class="col-md-4"></div>
+    </div>
+</div>
+
 <script>
-    require(['./lib/openlayers/ol', './model/map'])
+    require(['jQuery', 'ol', 'bootstrap', './model/map'])
 </script>
 </body>
 </html>

@@ -6,17 +6,22 @@ require.config({
         }
     },
     paths: {
-        app: '../app',
-        jquery: 'lib/jquery-1.11.3.min',
-        bootstrap: 'bootstrap/bootstrap.min',
-        ol: 'lib/openlayers/ol',
+        jQuery: './lib/jquery-1.11.3.min',
+        bootstrap: './lib/bootstrap/js/bootstrap.min',
+        ol: './lib/openlayers/ol-debug',
     },
     shim: {
+        jQuery: {
+            exports: 'jQuery'
+        },
         bootstrap: {
             deps: [
-                'jquery',
-                'css!../../bootstrap.min.css'
+                'jQuery',
+                'css!./lib/bootstrap/css/bootstrap.min.css'
             ]
         },
+        ol: {
+            deps: ['css!./lib/openlayers/ol.css']
+        }
     }
 });
