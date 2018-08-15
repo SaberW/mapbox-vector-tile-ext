@@ -30,9 +30,13 @@ beetlsql:
   daoSuffix: Dao
   basePackage: org.fengsoft.jts2geojson.dao
   dbStyle: org.beetl.sql.core.db.PostgresStyle
-beetl-beetlsql: dev=falsetemplatesPath
+beetl-beetlsql: dev=false
 beetl:
   suffix: html
   templatesPath: templates
+
+# 存放缓存文件的地址
+cache:
+  path: E:\Data\vectorTile
 
 

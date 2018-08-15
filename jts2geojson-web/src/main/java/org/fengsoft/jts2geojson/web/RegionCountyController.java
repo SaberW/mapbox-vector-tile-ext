@@ -1,18 +1,13 @@
 package org.fengsoft.jts2geojson.web;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.fengsoft.jts2geojson.convert.web.VectorTileController;
 import org.fengsoft.jts2geojson.services.RegionCountyServices;
-import org.geojson.Feature;
-import org.geojson.FeatureCollection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.File;
 
 /**
  * @Author JerFer
@@ -20,7 +15,7 @@ import java.io.OutputStream;
  */
 @Controller
 @RequestMapping(value = "regionCounty")
-public class RegionCountyController {
+public class RegionCountyController extends VectorTileController {
     @Autowired
     private RegionCountyServices regionCountyServices;
 
@@ -40,47 +35,17 @@ public class RegionCountyController {
             method = {RequestMethod.POST, RequestMethod.GET},
             produces = MediaType.APPLICATION_OCTET_STREAM_VALUE
     )
-    public void getLine2(@RequestParam("srsname") String srsname,
-                         @PathVariable("x") Integer x,
-                         @PathVariable("y") Integer y,
-                         @PathVariable("z") Integer z,
-                         HttpServletResponse response) {
-        try {
-            response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
-            OutputStream os = response.getOutputStream();
-            os.write(regionCountyServices.listFeature(srsname, x, y, z));
-            os.flush();
-            os.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+    public String getLine2(@RequestParam("srsname") String srsname,
+                           @RequestParam("layerName") String layerName,
+                           @PathVariable("x") Integer x,
+                           @PathVariable("y") Integer y,
+                           @PathVariable("z") Integer z) {
+        File parentFile = new File(cachePath + File.separator + layerName);
+        if (!parentFile.exists()) parentFile.mkdir();
+        File file = new File(cachePath + File.separator + layerName, String.format("%d-%d-%d", z, x, y) + ".mvt");
+        if (!file.exists()) {
+            regionCountyServices.listFeature(srsname, layerName, x, y, z);
         }
-    }
-
-    @RequestMapping("saveFeature")
-    @ResponseBody
-    public String saveFeature(@RequestParam String geoJson) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            Feature feature = objectMapper.readValue(geoJson, Feature.class);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return "";
-    }
-
-    @RequestMapping("saveFeatures")
-    @ResponseBody
-    public String saveFeatures(@RequestParam String geoJson) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            FeatureCollection featureCollection = objectMapper.readValue(geoJson, FeatureCollection.class);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return "";
+        return "forward:/regionCounty/download/" + layerName + "/" + file.getName();
     }
 }

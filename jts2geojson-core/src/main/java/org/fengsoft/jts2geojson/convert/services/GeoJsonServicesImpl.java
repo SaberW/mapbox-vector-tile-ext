@@ -1,7 +1,11 @@
 package org.fengsoft.jts2geojson.convert.services;
 
+import org.beetl.sql.core.SQLManager;
+import org.beetl.sql.core.SQLReady;
 import org.fengsoft.jts2geojson.convert.common.GeometryConvert;
 import org.fengsoft.jts2geojson.convert.entity.GeometryEntity;
+import org.fengsoft.jts2geojson.convert.tile.GlobalGeodetic;
+import org.fengsoft.jts2geojson.convert.tile.GlobalMercator;
 import org.geojson.Feature;
 import org.geojson.FeatureCollection;
 import org.locationtech.jts.geom.Geometry;
@@ -12,6 +16,8 @@ import org.locationtech.jts.io.WKBReader;
 import org.locationtech.jts.io.WKBWriter;
 import org.postgresql.util.PGobject;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.ReflectionUtils;
 
 import java.io.IOException;
@@ -29,6 +35,11 @@ public class GeoJsonServicesImpl<T extends GeometryEntity<ID>, ID extends Serial
     public WKBReader wkbReader = new WKBReader();
     public WKBWriter wkbWriter = new WKBWriter();
     public GeometryFactory geometryFactory = new GeometryFactory();
+    public GlobalGeodetic globalGeodetic;
+    public GlobalMercator globalMercator;
+
+    @Value("${cache.path}")
+    public String cachePath;
 
     public Feature toFeature(T t) throws Exception {
         Feature feature = new Feature();
@@ -96,5 +107,21 @@ public class GeoJsonServicesImpl<T extends GeometryEntity<ID>, ID extends Serial
             }
             return null;
         }).filter(a -> a != null).collect(Collectors.toList());
+    }
+
+    public double[] init(String srsname, int x, int y, int z) {
+        if ("4326".equals(srsname.split(":")[1])) {
+            globalGeodetic = new GlobalGeodetic("", 256);
+            geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+            return globalGeodetic.tileLatLonBounds(x, y, z);
+        } else if ("3857".equals(srsname.split(":")[1])) {
+            globalMercator = new GlobalMercator(256);
+            geometryFactory = new GeometryFactory(new PrecisionModel(), 3857);
+            return globalMercator.tileLatLonBounds(x, y, z);
+        } else return new double[4];
+    }
+
+    public String getSql(double[] bboxs, String layerName, String srsname) {
+        return "SELECT t.* FROM " + layerName + " t  WHERE ST_Intersects (shape,ST_MakeEnvelope(" + bboxs[1] + "," + bboxs[0] + "," + bboxs[3] + "," + bboxs[2] + "," + srsname.split(":")[1] + "))";
     }
 }

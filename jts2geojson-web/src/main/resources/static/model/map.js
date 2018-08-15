@@ -18,26 +18,26 @@ define(['lib/openlayers/ol-debug'], function (ol) {
         extent: [-180.0, -90.0, 180.0, 90.0]
     });
 
-    // baseLayer = new ol.layer.Tile({
-    //     extent: [97.52865599987456, 21.142702999943538, 106.19671199955917, 29.25132500004878],
-    //     source: new ol.source.TileArcGISRest({
-    //         url: 'http://10.111.106.82:6080/arcgis/rest/services/yunnan_vector/MapServer',
-    //         params: {
-    //             time: (new Date("2011/01/24 00:00:00 UTC").getTime()) + "," + (new Date("2012/07/16 00:00:00 UTC").getTime())
-    //         }
-    //     })
-    // });
-
     baseLayer = new ol.layer.Tile({
-        source: new ol.source.OSM(),
-        projection: projection
-    })
+        extent: [97.52865599987456, 21.142702999943538, 106.19671199955917, 29.25132500004878],
+        source: new ol.source.TileArcGISRest({
+            url: 'http://10.111.106.82:6080/arcgis/rest/services/yunnan_vector/MapServer',
+            params: {
+                time: (new Date("2011/01/24 00:00:00 UTC").getTime()) + "," + (new Date("2012/07/16 00:00:00 UTC").getTime())
+            }
+        })
+    });
+
+    // baseLayer = new ol.layer.Tile({
+    //     source: new ol.source.OSM(),
+    //     projection: projection
+    // })
 
     waterLineLayer = new ol.layer.VectorTile({
-        visible: false,
+        visible: true,
         source: new ol.source.VectorTile({
             format: new ol.format.MVT(),
-            url: contextPath + '/waterLine/line2/{z}/{x}/{-y}.mvt?srsname=' + projection.getCode(),
+            url: contextPath + '/waterLine/line2/{z}/{x}/{-y}.mvt?srsname=' + projection.getCode() + '&layerName=water_line',
             projection: projection,
             extent: ol.proj.EPSG4326.EXTENT,
             tileSize: 256,
@@ -51,7 +51,7 @@ define(['lib/openlayers/ol-debug'], function (ol) {
         visible: false,
         source: new ol.source.VectorTile({
             format: new ol.format.MVT(),
-            url: contextPath + '/regionCounty/polygon2/{z}/{x}/{-y}.mvt?srsname=' + projection.getCode(),
+            url: contextPath + '/regionCounty/polygon2/{z}/{x}/{-y}.mvt?srsname=' + projection.getCode() + '&layerName=region_county',
             projection: projection,
             extent: ol.proj.EPSG4326.EXTENT,
             tileSize: 256,
@@ -62,10 +62,10 @@ define(['lib/openlayers/ol-debug'], function (ol) {
     })
 
     poiVillageLayer = new ol.layer.VectorTile({
-        visible: true,
+        visible: false,
         source: new ol.source.VectorTile({
             format: new ol.format.MVT(),
-            url: contextPath + '/poiVillage/poi2/{z}/{x}/{-y}.mvt?srsname=' + projection.getCode(),
+            url: contextPath + '/poiVillage/poi2/{z}/{x}/{-y}.mvt?srsname=' + projection.getCode() + '&layerName=poi_village',
             projection: projection,
             extent: ol.proj.EPSG4326.EXTENT,
             tileSize: 256,
@@ -86,10 +86,11 @@ define(['lib/openlayers/ol-debug'], function (ol) {
 
     map.on('click', function (event) {
         var features = map.getFeaturesAtPixel(event.pixel);
-        alert(features.length);
         if (!features) {
             selection = {};
             return;
+        } else {
+            alert(features.length);
         }
     });
 })

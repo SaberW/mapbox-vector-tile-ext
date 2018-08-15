@@ -1,4 +1,4 @@
-package org.fengsoft.jts2geojson.tile;
+package org.fengsoft.jts2geojson.convert.tile;
 
 /**
  * @Author JerFer
