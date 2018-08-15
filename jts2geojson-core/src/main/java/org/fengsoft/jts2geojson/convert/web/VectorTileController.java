@@ -23,7 +23,11 @@ public class VectorTileController {
     @Value("${cache.path}")
     public String cachePath;
 
-    @RequestMapping(value = "download/{layerName}/{fileName}", method = RequestMethod.GET)
+    @RequestMapping(
+            value = "download/{layerName}/{fileName}",
+            method = {RequestMethod.GET, RequestMethod.POST},
+            produces = MediaType.APPLICATION_OCTET_STREAM_VALUE
+    )
     public ResponseEntity<InputStreamResource> downloadFile(
             @PathVariable(value = "layerName") String layerName,
             @PathVariable(value = "fileName") String fileName
@@ -32,13 +36,7 @@ public class VectorTileController {
 
         String filePath = cachePath + File.separator + layerName + File.separator + fileName;
         FileSystemResource file = new FileSystemResource(filePath);
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
-        headers.add("Content-Disposition", String.format("attachment; filename=\"%s\"", file.getFilename()));
-        headers.add("Pragma", "no-cache");
-        headers.add("Expires", "0");
-
-        return ResponseEntity.ok().headers(headers).contentLength(file.contentLength())
+        return ResponseEntity.ok().contentLength(file.contentLength())
                 .contentType(MediaType.parseMediaType(MediaType.APPLICATION_OCTET_STREAM_VALUE))
                 .body(new InputStreamResource(file.getInputStream()));
     }
