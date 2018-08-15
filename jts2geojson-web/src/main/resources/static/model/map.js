@@ -34,7 +34,7 @@ define(['lib/openlayers/ol-debug'], function (ol) {
     // })
 
     waterLineLayer = new ol.layer.VectorTile({
-        visible: true,
+        visible: false,
         source: new ol.source.VectorTile({
             format: new ol.format.MVT(),
             url: contextPath + '/waterLine/line2/{z}/{x}/{-y}.mvt?srsname=' + projection.getCode() + '&layerName=water_line',
@@ -48,7 +48,7 @@ define(['lib/openlayers/ol-debug'], function (ol) {
     })
 
     regionCountyLayer = new ol.layer.VectorTile({
-        visible: false,
+        visible: true,
         source: new ol.source.VectorTile({
             format: new ol.format.MVT(),
             url: contextPath + '/regionCounty/polygon2/{z}/{x}/{-y}.mvt?srsname=' + projection.getCode() + '&layerName=region_county',

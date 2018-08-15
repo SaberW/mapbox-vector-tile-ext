@@ -9,6 +9,7 @@
     <modules>
         <module>jts2geojson-core</module>
         <module>jts2geojson-web</module>
+        <module>jts2geojson-mapbox</module>
     </modules>
     <packaging>pom</packaging>
 

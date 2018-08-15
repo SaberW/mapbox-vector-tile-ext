@@ -2,28 +2,14 @@ package org.fengsoft.jts2geojson.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.wdtinc.mapbox_vector_tile.VectorTile;
-import com.wdtinc.mapbox_vector_tile.adapt.jts.*;
-import com.wdtinc.mapbox_vector_tile.build.MvtLayerBuild;
-import com.wdtinc.mapbox_vector_tile.build.MvtLayerParams;
-import com.wdtinc.mapbox_vector_tile.build.MvtLayerProps;
 import lombok.extern.slf4j.Slf4j;
 import org.beetl.sql.core.SQLManager;
 import org.beetl.sql.core.SQLReady;
 import org.fengsoft.jts2geojson.convert.services.GeoJsonServicesImpl;
 import org.fengsoft.jts2geojson.entity.WaterLine;
-import org.locationtech.jts.geom.Envelope;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.io.ParseException;
-import org.locationtech.jts.io.WKBReader;
-import org.postgresql.util.PGobject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -43,51 +29,11 @@ public class WaterLineServices extends GeoJsonServicesImpl<WaterLine, Integer> {
 
     public void listFeature(String srsname, String layerName, Integer x, Integer y, Integer z) {
         //计算范围
-        double[] bboxs = init(srsname, x, y, z);
-
-        String sql = getSql(bboxs, layerName, srsname);
+        double[] bboxs = calBbox(srsname, x, y, z);
+        String sql = "SELECT t.* FROM " + layerName + " t  WHERE ST_Intersects (shape,ST_MakeEnvelope(" + bboxs[1] + "," + bboxs[0] + "," + bboxs[3] + "," + bboxs[2] + "," + srsname.split(":")[1] + "))";
         SQLReady sqlReady = new SQLReady(sql);
         List<WaterLine> res = sqlManager.execute(sqlReady, WaterLine.class);
 
-        MvtLayerParams layerParams = new MvtLayerParams(); // Default extent
-        /////////////////////////////////
-        VectorTile.Tile.Builder tileBuilder = VectorTile.Tile.newBuilder();
-        VectorTile.Tile.Layer.Builder layerBuilder = MvtLayerBuild.newLayerBuilder(layerName, layerParams);
-
-        IGeometryFilter acceptAllGeomFilter = geom -> true;
-        List<Geometry> geometries = new ArrayList<>();
-        for (WaterLine waterLine : res) {
-            if (waterLine.getShape() instanceof PGobject) {
-                PGobject pGobject = (PGobject) waterLine.getShape();
-                byte[] bytes = WKBReader.hexToBytes(pGobject.getValue());
-                Geometry geometry = null;
-                try {
-                    geometry = wkbReader.read(bytes);
-                } catch (ParseException e) {
-                    e.printStackTrace();
-                }
-                if (geometry != null)
-                    geometries.add(geometry);
-            }
-        }
-
-        Envelope tileEnvelope = new Envelope(bboxs[1], bboxs[3], bboxs[0], bboxs[2]);
-
-        TileGeomResult tileGeom = JtsAdapter.createTileGeom(geometries, tileEnvelope, geometryFactory, layerParams, acceptAllGeomFilter);
-
-        MvtLayerProps layerProps = new MvtLayerProps();
-
-        IUserDataConverter userDataConverter = new UserDataKeyValueMapConverter();
-        List<VectorTile.Tile.Feature> features = JtsAdapter.toFeatures(tileGeom.mvtGeoms, layerProps, userDataConverter);
-        layerBuilder.addAllFeatures(features);
-        tileBuilder.addLayers(layerBuilder.build());
-        MvtLayerBuild.writeProps(layerBuilder, layerProps);
-        VectorTile.Tile mvt = tileBuilder.build();
-
-        try {
-            Files.write(Paths.get(cachePath, layerName, String.format("%d-%d-%d", z, x, y) + ".mvt"), mvt.toByteArray());
-        } catch (IOException e) {
-            log.error(e.getMessage(), e);
-        }
+        toMvt(res, bboxs, layerName, x, y, z);
     }
 }
