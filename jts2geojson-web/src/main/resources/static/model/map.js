@@ -1,5 +1,6 @@
 define(['json!model/data/abc.json'], function (Abc) {
     var map, view, projection, baseLayer, regionCountyLayer, waterLineLayer, poiVillageLayer, tempLayer;
+    var select;
     projection = new ol.proj.Projection({
         code: "EPSG:4326",
         units: "degrees",
@@ -31,6 +32,8 @@ define(['json!model/data/abc.json'], function (Abc) {
 
     waterLineLayer = new ol.layer.VectorTile({
         visible: true,
+        renderMode: "image",
+        preload: 12,
         source: new ol.source.VectorTile({
             format: new ol.format.MVT(),
             url: contextPath + '/waterLine/line2/{z}/{x}/{-y}.mvt?srsname=' + projection.getCode() + '&layerName=water_line',
@@ -45,6 +48,8 @@ define(['json!model/data/abc.json'], function (Abc) {
 
     regionCountyLayer = new ol.layer.VectorTile({
         visible: false,
+        renderMode: "image",
+        preload: 12,
         source: new ol.source.VectorTile({
             format: new ol.format.MVT(),
             url: contextPath + '/regionCounty/polygon2/{z}/{x}/{-y}.mvt?srsname=' + projection.getCode() + '&layerName=region_county',
@@ -59,6 +64,8 @@ define(['json!model/data/abc.json'], function (Abc) {
 
     poiVillageLayer = new ol.layer.VectorTile({
         visible: false,
+        renderMode: "image",
+        preload: 12,
         source: new ol.source.VectorTile({
             format: new ol.format.MVT(),
             url: contextPath + '/poiVillage/poi2/{z}/{x}/{-y}.mvt?srsname=' + projection.getCode() + '&layerName=poi_village',
@@ -73,19 +80,31 @@ define(['json!model/data/abc.json'], function (Abc) {
 
     tempLayer = new ol.layer.Vector({
         source: new ol.source.Vector({wrapX: true}),
-        style: new ol.style.Style({
-            stroke: new ol.style.Stroke({
-                color: "#ff0000",
-                width: 4
-            }),
-            fill: new ol.style.Fill({
-                color: "#ffff00"
-            }),
-            image: new ol.style.Circle({
-                width: 5,
-                color: "#ffff00"
+        style: function (feature, res) {
+            return new ol.style.Style({
+                stroke: new ol.style.Stroke({
+                    color: "#ff0000",
+                    width: 4
+                }),
+                fill: new ol.style.Fill({
+                    color: "#ffff00"
+                }),
+                image: new ol.style.Circle({
+                    radius: 6,   //填充图案样式
+                    fill: new ol.style.Fill({color: '#ffcc33'}),
+                    stroke: new ol.style.Stroke({
+                        color: "#ff0000",
+                        width: 2
+                    }),
+                }),
+                text: new ol.style.Text({
+                    text: feature.get("name"),
+                    font: 'normal normal bold 12px arial,sans-serif',
+                    offsetY: -30,
+                    fill: new ol.style.Fill({color: '#000000'})
+                })
             })
-        })
+        }
     })
 
     map = new ol.Map({
@@ -97,54 +116,55 @@ define(['json!model/data/abc.json'], function (Abc) {
 
     map.getView().fit([97.528656, 21.142703, 106.196712, 29.251325], map.getSize());
 
-    map.on('click', function (event) {
-        var features = map.getFeaturesAtPixel(event.pixel);
-        if (!features) {
-            return;
-        } else {
-            if (features[0]) {
-                tempLayer.getSource().clear(true);
-                var fea;
-                if (features[0].getType() == "Point") {
-                    fea = new ol.Feature({
-                        geometry: new ol.geom.Point(features[0].getFlatCoordinates())
-                    })
-                } else if (features[0].getType() == "LineString") {
-                    var flatCoords = features[0].getFlatCoordinates();
-                    var coords = [], coord = [];
-                    for (var i = 0; i < flatCoords.length; i++) {
-                        if (i % 2 == 0) {
-                            coord.push(flatCoords[i]);
-                        } else if (i % 2 == 1) {
-                            coord.push(flatCoords[i]);
-                            coords.push(coord);
-                            coord = [];
-                        }
+    select = new ol.interaction.Select();
+    select.on("select", function (e) {
+        tempLayer.getSource().clear(true);
+        if (e.target.getFeatures().getLength() > 0) {
+            var fea, targetFea = e.target.getFeatures().getArray()[0], newGeom;
+            var flatCoords = targetFea.getFlatCoordinates();
+            var coords = [], coord = [];
+            if (targetFea.getType() == "Point") {
+                newGeom = new ol.geom.Point(targetFea.getFlatCoordinates())
+            } else if (targetFea.getType() == "LineString") {
+                for (var i = 0; i < flatCoords.length; i++) {
+                    if (i % 2 == 0) {
+                        coord.push(flatCoords[i]);
+                    } else if (i % 2 == 1) {
+                        coord.push(flatCoords[i]);
+                        coords.push(coord);
+                        coord = [];
                     }
-                    fea = new ol.Feature({
-                        geometry: new ol.geom.LineString(coords)
-                    })
-                    coords = [], flatCoords = [], coord = [];
-                } else if (features[0].getType() == "Polygon") {
-                    var flatCoords = features[0].getFlatCoordinates();
-                    var coords = [], coord = [];
-                    for (var i = 0; i < flatCoords.length; i++) {
-                        if (i % 2 == 0) {
-                            coord.push(flatCoords[i]);
-                        } else if (i % 2 == 1) {
-                            coord.push(flatCoords[i]);
-                            coords.push(coord);
-                            coord = [];
-                        }
-                    }
-                    fea = new ol.Feature({
-                        geometry: new ol.geom.Polygon([coords])
-                    })
-                    coords = [], flatCoords = [], coord = [];
                 }
-                tempLayer.getSource().addFeature(fea);
-                tempLayer.getSource().dispatchEvent("addfeature");
+                newGeom = new ol.geom.LineString(coords);
+            } else if (targetFea.getType() == "Polygon") {
+                for (var i = 0; i < flatCoords.length; i++) {
+                    if (i % 2 == 0) {
+                        coord.push(flatCoords[i]);
+                    } else if (i % 2 == 1) {
+                        coord.push(flatCoords[i]);
+                        coords.push(coord);
+                        coord = [];
+                    }
+                }
+                newGeom = new ol.geom.Polygon([coords])
             }
+            coords = [], flatCoords = [], coord = [];
+            fea = new ol.Feature({
+                geometry: newGeom,
+                name: targetFea.get("name")
+            })
+            tempLayer.getSource().addFeature(fea);
+            tempLayer.getSource().dispatchEvent("addfeature");
         }
+    })
+    map.addInteraction(select);
+
+    //事件：抓
+    map.on('pointerdrag', function (evt) {
+        select.setActive(false);
+    });
+    //事件：地图移动结束
+    map.on('moveend', function (evt) {
+        select.setActive(true);
     });
 })

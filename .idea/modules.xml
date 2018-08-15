@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/jts2geojson-core/jts2geojson-core.iml" filepath="$PROJECT_DIR$/jts2geojson-core/jts2geojson-core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/jts2geojson-mapbox/jts2geojson-mapbox.iml" filepath="$PROJECT_DIR$/jts2geojson-mapbox/jts2geojson-mapbox.iml" />
+      <module fileurl="file://$PROJECT_DIR$/jts2geojson-web/jts2geojson-web.iml" filepath="$PROJECT_DIR$/jts2geojson-web/jts2geojson-web.iml" />
+      <module fileurl="file://$PROJECT_DIR$/mapbox-vector-tile-ext.iml" filepath="$PROJECT_DIR$/mapbox-vector-tile-ext.iml" />
+    </modules>
+  </component>
+</project>

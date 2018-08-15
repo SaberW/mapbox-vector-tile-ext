@@ -1,18 +1,23 @@
 package org.fengsoft.jts2geojson.convert.services;
 
 import com.wdtinc.mapbox_vector_tile.VectorTile;
-import com.wdtinc.mapbox_vector_tile.adapt.jts.*;
+import com.wdtinc.mapbox_vector_tile.adapt.jts.JtsAdapter;
+import com.wdtinc.mapbox_vector_tile.adapt.jts.TileGeomResult;
+import com.wdtinc.mapbox_vector_tile.adapt.jts.UserDataKeyValueMapConverter;
 import com.wdtinc.mapbox_vector_tile.build.MvtLayerBuild;
 import com.wdtinc.mapbox_vector_tile.build.MvtLayerParams;
 import com.wdtinc.mapbox_vector_tile.build.MvtLayerProps;
-import lombok.extern.slf4j.Slf4j;
+import no.ecc.vectortile.VectorTileEncoder;
 import org.fengsoft.jts2geojson.convert.common.GeometryConvert;
 import org.fengsoft.jts2geojson.convert.entity.GeometryEntity;
 import org.fengsoft.jts2geojson.convert.tile.GlobalGeodetic;
 import org.fengsoft.jts2geojson.convert.tile.GlobalMercator;
 import org.geojson.Feature;
 import org.geojson.FeatureCollection;
-import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.PrecisionModel;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKBReader;
 import org.locationtech.jts.io.WKBWriter;
@@ -39,7 +44,6 @@ import java.util.stream.Collectors;
  * @Author JerFer
  * @Date 2018/8/1---9:38
  */
-@Slf4j
 public class GeoJsonServicesImpl<T extends GeometryEntity<ID>, ID extends Serializable> implements GeoJsonServices<T> {
     public GeometryConvert geometryConvert = new GeometryConvert();
     public WKBReader wkbReader = new WKBReader();
@@ -209,7 +213,33 @@ public class GeoJsonServicesImpl<T extends GeometryEntity<ID>, ID extends Serial
         try {
             Files.write(Paths.get(cachePath, layerName, String.format("%d-%d-%d", z, x, y) + ".mvt"), mvt.toByteArray());
         } catch (IOException e) {
-            log.error(e.getMessage(), e);
+            e.printStackTrace();
+        }
+    }
+
+    public void toMvt2(List<T> res, double[] bboxs, String layerName, Integer x, Integer y, Integer z) {
+        VectorTileEncoder encoder = new VectorTileEncoder();
+        res.forEach(t -> {
+            if (t.getShape() instanceof PGobject) {
+                PGobject pGobject = (PGobject) t.getShape();
+                byte[] bytes = WKBReader.hexToBytes(pGobject.getValue());
+                Geometry geometry = null;
+                try {
+                    geometry = wkbReader.read(bytes);
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+
+                if (geometry != null) {
+                    encoder.addFeature(layerName, transBean2Map(t), geometry);
+                }
+            }
+        });
+
+        try {
+            Files.write(Paths.get(cachePath, layerName, String.format("%d-%d-%d", z, x, y) + ".mvt"), encoder.encode());
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

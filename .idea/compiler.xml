@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="jts2geojson-core" />
+        <module name="jts2geojson-mapbox" />
+        <module name="jts2geojson-web" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="jts2geojson-core" target="8" />
+      <module name="jts2geojson-mapbox" target="1.8" />
+      <module name="jts2geojson-web" target="1.8" />
+      <module name="mapbox-vector-tile-ext" target="1.8" />
+    </bytecodeTargetLevel>
+  </component>
+</project>
