@@ -10,7 +10,7 @@ define(['json!model/data/abc.json'], function (Abc) {
     //建立地图视图
     view = new ol.View({
         center: [0, 0],
-        zoom: 2,
+        zoom: 12,
         projection: projection,
         extent: [-180.0, -90.0, 180.0, 90.0]
     });
@@ -31,7 +31,7 @@ define(['json!model/data/abc.json'], function (Abc) {
     })
 
     waterLineLayer = new ol.layer.VectorTile({
-        visible: true,
+        visible: false,
         renderMode: "image",
         preload: 12,
         source: new ol.source.VectorTile({
@@ -47,7 +47,7 @@ define(['json!model/data/abc.json'], function (Abc) {
     })
 
     regionCountyLayer = new ol.layer.VectorTile({
-        visible: false,
+        visible: true,
         renderMode: "image",
         preload: 12,
         source: new ol.source.VectorTile({

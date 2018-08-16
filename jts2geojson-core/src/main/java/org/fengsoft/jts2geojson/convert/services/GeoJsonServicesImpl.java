@@ -14,10 +14,7 @@ import org.fengsoft.jts2geojson.convert.tile.GlobalGeodetic;
 import org.fengsoft.jts2geojson.convert.tile.GlobalMercator;
 import org.geojson.Feature;
 import org.geojson.FeatureCollection;
-import org.locationtech.jts.geom.Envelope;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.PrecisionModel;
+import org.locationtech.jts.geom.*;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKBReader;
 import org.locationtech.jts.io.WKBWriter;
@@ -48,9 +45,9 @@ public class GeoJsonServicesImpl<T extends GeometryEntity<ID>, ID extends Serial
     public GeometryConvert geometryConvert = new GeometryConvert();
     public WKBReader wkbReader = new WKBReader();
     public WKBWriter wkbWriter = new WKBWriter();
-    public GeometryFactory geometryFactory = new GeometryFactory();
-    public GlobalGeodetic globalGeodetic;
-    public GlobalMercator globalMercator;
+    public GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+    public GlobalGeodetic globalGeodetic = new GlobalGeodetic("", 256);
+    public GlobalMercator globalMercator = new GlobalMercator(256);
     private MvtLayerProps layerProps = new MvtLayerProps();
     private MvtLayerParams layerParams = new MvtLayerParams();
 
@@ -127,12 +124,8 @@ public class GeoJsonServicesImpl<T extends GeometryEntity<ID>, ID extends Serial
 
     public double[] calBbox(String srsname, int x, int y, int z) {
         if ("4326".equals(srsname.split(":")[1])) {
-            globalGeodetic = new GlobalGeodetic("", 256);
-            geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
             return globalGeodetic.tileLatLonBounds(x, y, z);
         } else if ("3857".equals(srsname.split(":")[1])) {
-            globalMercator = new GlobalMercator(256);
-            geometryFactory = new GeometryFactory(new PrecisionModel(), 3857);
             return globalMercator.tileLatLonBounds(x, y, z);
         } else return new double[4];
     }
@@ -219,27 +212,93 @@ public class GeoJsonServicesImpl<T extends GeometryEntity<ID>, ID extends Serial
 
     public void toMvt2(List<T> res, double[] bboxs, String layerName, Integer x, Integer y, Integer z) {
         VectorTileEncoder encoder = new VectorTileEncoder();
-        res.forEach(t -> {
-            if (t.getShape() instanceof PGobject) {
-                PGobject pGobject = (PGobject) t.getShape();
-                byte[] bytes = WKBReader.hexToBytes(pGobject.getValue());
-                Geometry geometry = null;
-                try {
-                    geometry = wkbReader.read(bytes);
-                } catch (ParseException e) {
-                    e.printStackTrace();
-                }
-
-                if (geometry != null) {
-                    encoder.addFeature(layerName, transBean2Map(t), geometry);
+        double[] piexls = new double[]{x * 256, y * 256};
+        for (T t : res) {
+            synchronized (t) {
+                if (t.getShape() instanceof PGobject) {
+                    PGobject pGobject = (PGobject) t.getShape();
+                    byte[] bytes = WKBReader.hexToBytes(pGobject.getValue());
+                    Geometry geometry = null;
+                    try {
+                        if (bytes.length > 0) {
+                            geometry = wkbReader.read(bytes);
+                            Geometry geomPiex = geom2piex(geometry, piexls, z);
+                            encoder.addFeature(layerName, transBean2Map(t), geomPiex);
+                        }
+                    } catch (ParseException e) {
+                    }
                 }
             }
-        });
-
+        }
         try {
             Files.write(Paths.get(cachePath, layerName, String.format("%d-%d-%d", z, x, y) + ".mvt"), encoder.encode());
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private Geometry geom2piex(Geometry geometry, double[] pxy, int z) {
+        if (geometry.getGeometryType().equals("Point")) {
+            new CoordinateSequences();
+            return geometryFactory.createPoint(cooridinate2point(geometry.getCoordinate(), pxy, z));
+        } else if (geometry.getGeometryType().equals("MultiPoint")) {
+            Point[] ps = new Point[geometry.getCoordinates().length];
+            for (int i = 0; i < geometry.getCoordinates().length; i++) {
+                ps[i] = geometryFactory.createPoint(cooridinate2point(geometry.getCoordinates()[i], pxy, z));
+            }
+            return geometryFactory.createMultiPoint(ps);
+        } else if (geometry.getGeometryType().equals("LineString")) {
+            return lineString2pixel((LineString) geometry, pxy, z);
+        } else if (geometry.getGeometryType().equals("MultiLineString")) {
+            MultiLineString multiLineStringIn = (MultiLineString) geometry;
+            LineString[] lineStrings = new LineString[multiLineStringIn.getNumGeometries()];
+            for (int i = 0; i < multiLineStringIn.getNumGeometries(); i++) {
+                lineStrings[i] = lineString2pixel((LineString) multiLineStringIn.getGeometryN(i), pxy, z);
+            }
+            return new MultiLineString(lineStrings, geometryFactory);
+        } else if (geometry.getGeometryType().equals("Polygon")) {
+            return polygon2pixel((Polygon) geometry, pxy, z);
+        } else if (geometry.getGeometryType() == "MultiPolygon") {
+            MultiPolygon multiPolygonIn = (MultiPolygon) geometry;
+            Polygon[] polygons = new Polygon[multiPolygonIn.getNumGeometries()];
+            for (int i = 0; i < multiPolygonIn.getNumGeometries(); i++) {
+                polygons[i] = polygon2pixel((Polygon) multiPolygonIn.getGeometryN(i), pxy, z);
+            }
+            return new MultiPolygon(polygons, geometryFactory);
+        }
+
+        return null;
+    }
+
+    private LineString lineString2pixel(LineString lineStringIn, double[] pxy, int z) {
+        Coordinate[] ps = new Coordinate[lineStringIn.getCoordinates().length];
+        for (int i = 0; i < lineStringIn.getCoordinates().length; i++) {
+            ps[i] = cooridinate2point(lineStringIn.getCoordinates()[i], pxy, z);
+        }
+        return geometryFactory.createLineString(ps);
+    }
+
+    private Polygon polygon2pixel(Polygon polygonIn, double[] pxy, int z) {
+        LinearRing[] lineStrings = new LinearRing[polygonIn.getNumInteriorRing()];
+        for (int i = 0; i < polygonIn.getNumInteriorRing(); i++) {
+            LinearRing linearRing = (LinearRing) polygonIn.getInteriorRingN(i);
+            Coordinate[] ps = new Coordinate[linearRing.getCoordinates().length];
+            for (int j = 0; j < linearRing.getCoordinates().length; j++) {
+                ps[j] = cooridinate2point(linearRing.getCoordinates()[j], pxy, z);
+            }
+            ;
+            lineStrings[i] = geometryFactory.createLinearRing(ps);
+        }
+
+        Coordinate[] ps = new Coordinate[polygonIn.getExteriorRing().getCoordinates().length];
+        for (int i = 0; i < polygonIn.getExteriorRing().getCoordinates().length; i++) {
+            ps[i] = cooridinate2point(polygonIn.getExteriorRing().getCoordinates()[i], pxy, z);
+        }
+        return geometryFactory.createPolygon(geometryFactory.createLinearRing(ps), lineStrings);
+    }
+
+    private Coordinate cooridinate2point(Coordinate coordinate, double[] pxy, int z) {
+        double[] pielxs = globalGeodetic.lonlatToPixels(coordinate.x, coordinate.y, z);
+        return new Coordinate((int) (pielxs[0] - pxy[0]), (int) (pielxs[1] - pxy[1]));
     }
 }
