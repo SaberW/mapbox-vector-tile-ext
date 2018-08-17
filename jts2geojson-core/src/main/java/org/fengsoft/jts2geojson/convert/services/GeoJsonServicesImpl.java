@@ -122,6 +122,15 @@ public class GeoJsonServicesImpl<T extends GeometryEntity<ID>, ID extends Serial
         }).filter(a -> a != null).collect(Collectors.toList());
     }
 
+    /**
+     * 传入参数为TMS
+     *
+     * @param srsname
+     * @param x
+     * @param y
+     * @param z
+     * @return
+     */
     public double[] calBbox(String srsname, int x, int y, int z) {
         if ("4326".equals(srsname.split(":")[1])) {
             return globalGeodetic.tileLatLonBounds(x, y, z);
@@ -184,7 +193,7 @@ public class GeoJsonServicesImpl<T extends GeometryEntity<ID>, ID extends Serial
         TileGeomResult tileGeom = null;
         if (geomType == VectorTile.Tile.GeomType.POLYGON) {
             Envelope clipEnvelope = new Envelope(tileEnvelope);
-            clipEnvelope.expandBy((bboxs[3] - bboxs[1]) * .01f, (bboxs[2] - bboxs[0]) * .01f);
+            clipEnvelope.expandBy((bboxs[3] - bboxs[1]) * .1f, (bboxs[2] - bboxs[0]) * .1f);
             tileGeom = JtsAdapter.createTileGeom(geometries, tileEnvelope, clipEnvelope, geometryFactory, layerParams, geom -> true);
         } else {
             tileGeom = JtsAdapter.createTileGeom(geometries, tileEnvelope, geometryFactory, layerParams, geom -> true);
@@ -222,7 +231,7 @@ public class GeoJsonServicesImpl<T extends GeometryEntity<ID>, ID extends Serial
                     try {
                         if (bytes.length > 0) {
                             geometry = wkbReader.read(bytes);
-                            Geometry geomPiex = geom2piex(geometry, piexls, z);
+                            Geometry geomPiex = geom2piex(geometry, piexls, z - 1);
                             encoder.addFeature(layerName, transBean2Map(t), geomPiex);
                         }
                     } catch (ParseException e) {

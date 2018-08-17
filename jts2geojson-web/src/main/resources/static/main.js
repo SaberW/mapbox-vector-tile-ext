@@ -12,7 +12,8 @@ require.config({
         'jQuery': 'lib/jquery-1.11.3.min',
         'bootstrap': 'lib/bootstrap/js/bootstrap.min',
         'ol': 'lib/openlayers/ol',
-        'map': 'model/map'
+        'map': 'model/map',
+        'map2': 'model/map2'
     },
     shim: {
         'jQuery': {
@@ -29,8 +30,11 @@ require.config({
         },
         'map': {
             deps: ['jQuery', 'bootstrap', 'ol']
+        },
+        'map2': {
+            deps: ['jQuery', 'bootstrap', 'ol']
         }
     }
 });
 
-require(['map'])
+require(['map2'])

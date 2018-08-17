@@ -28,16 +28,24 @@ public class RegionCountyServices extends GeoJsonServicesImpl<RegionCounty, Inte
         return new ObjectMapper().writeValueAsString(toFeatures(sqlManager.all(RegionCounty.class)));
     }
 
+    /**
+     *
+     * @param srsname
+     * @param layerName
+     * @param x
+     * @param y XYZ tiling scheme
+     * @param z
+     */
     public void listFeature(String srsname, String layerName, Integer x, Integer y, Integer z) {
+        //y = (int) Math.pow(2, z) - 1 - y;// TMS转XYZ
+        //y = (1 << z) - y - 1;            //将XYZ 转为 TMS
+
         //计算范围
-
-        y = (int) Math.pow(2, z) - 1 - y;
-
         double[] bboxs = calBbox(srsname, x, y, z);
         String sql = "SELECT t.id,t.name,t.shape FROM " + layerName + " t  WHERE ST_Intersects (shape,ST_MakeEnvelope(" + bboxs[1] + "," + bboxs[0] + "," + bboxs[3] + "," + bboxs[2] + "," + srsname.split(":")[1] + "))";
         SQLReady sqlReady = new SQLReady(sql);
         List<RegionCounty> res = sqlManager.execute(sqlReady, RegionCounty.class);
 
-        toMvt2(res, bboxs, layerName, x, y, z);
+        toMvt(res, bboxs, layerName, x, y, z);
     }
 }

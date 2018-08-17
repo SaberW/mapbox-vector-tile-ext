@@ -53,7 +53,6 @@ define(['json!model/data/abc.json'], function (Abc) {
             extent: ol.proj.get("EPSG:4326").getExtent(),
             tileSize: 256,
             maxZoom: 21,
-            minZoom: 0,
             wrapX: true
         }),
     })
@@ -69,7 +68,6 @@ define(['json!model/data/abc.json'], function (Abc) {
             extent: ol.proj.get("EPSG:4326").getExtent(),
             tileSize: 256,
             maxZoom: 21,
-            minZoom: 0,
             wrapX: true
         }),
     })
@@ -85,7 +83,6 @@ define(['json!model/data/abc.json'], function (Abc) {
             extent: ol.proj.get("EPSG:4326").getExtent(),
             tileSize: 256,
             maxZoom: 21,
-            minZoom: 0,
             wrapX: true
         }),
     })

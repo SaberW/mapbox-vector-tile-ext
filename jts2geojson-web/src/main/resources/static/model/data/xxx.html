@@ -1,0 +1,235 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="imagetoolbar" content="no">
+    <title>gis:region_county EPSG:4326 application/x-protobuf;type=mapbox-vector</title>
+    <style type="text/css">
+        body {
+            font-family: sans-serif;
+            font-weight: bold;
+            font-size: .8em;
+        }
+
+        body {
+            border: 0px;
+            margin: 0px;
+            padding: 0px;
+        }
+
+        #map {
+            width: 85%;
+            height: 85%;
+            border: 0px;
+            padding: 0px;
+        }
+
+        #info iframe {
+            border: none;
+        }
+
+        .ol-scale-value {
+            top: 24px;
+            right: 8px;
+            position: absolute;
+        }
+    </style>
+    <script src="../../openlayers3/ol.js"></script>
+    <link rel='stylesheet' href='../../openlayers3/ol.css' type='text/css'>
+    <script type="text/javascript">
+        function init() {
+            function ScaleControl(opt_options) {
+                var options = opt_options || {};
+
+                var element = document.createElement('div');
+                element.className = 'ol-scale-value';
+
+                ol.control.Control.call(this, {
+                    element: element,
+                    target: options.target
+                });
+
+            };
+            ol.inherits(ScaleControl, ol.control.Control);
+            ScaleControl.prototype.setMap = function (map) {
+                map.on('postrender', function () {
+                    var view = map.getView();
+                    var resolution = view.getResolution();
+                    var dpi = 90.71428571428572;
+                    var mpu = map.getView().getProjection().getMetersPerUnit();
+                    var scale = resolution * mpu * 39.37 * dpi;
+
+                    if (scale >= 9500 && scale <= 950000) {
+                        scale = Math.round(scale / 1000) + 'K';
+                    } else if (scale >= 950000) {
+                        scale = Math.round(scale / 1000000) + 'M';
+                    } else {
+                        scale = Math.round(scale);
+                    }
+                    this.element.innerHTML = 'Scale = 1 : ' + scale;
+                }, this);
+                ol.control.Control.prototype.setMap.call(this, map);
+            }
+
+            var gridsetName = 'EPSG:4326';
+            var gridNames = ['EPSG:4326:0', 'EPSG:4326:1', 'EPSG:4326:2', 'EPSG:4326:3', 'EPSG:4326:4', 'EPSG:4326:5', 'EPSG:4326:6', 'EPSG:4326:7', 'EPSG:4326:8', 'EPSG:4326:9', 'EPSG:4326:10', 'EPSG:4326:11', 'EPSG:4326:12', 'EPSG:4326:13', 'EPSG:4326:14', 'EPSG:4326:15', 'EPSG:4326:16', 'EPSG:4326:17', 'EPSG:4326:18', 'EPSG:4326:19', 'EPSG:4326:20', 'EPSG:4326:21'];
+            var baseUrl = '../service/wmts';
+            var style = '';
+            var format = 'application/x-protobuf;type=mapbox-vector';
+            var infoFormat = 'text/html';
+            var layerName = 'gis:region_county';
+            var projection = new ol.proj.Projection({
+                code: 'EPSG:4326',
+                units: 'degrees',
+                axisOrientation: 'neu'
+            });
+            var resolutions = [0.703125, 0.3515625, 0.17578125, 0.087890625, 0.0439453125, 0.02197265625, 0.010986328125, 0.0054931640625, 0.00274658203125, 0.001373291015625, 6.866455078125E-4, 3.4332275390625E-4, 1.71661376953125E-4, 8.58306884765625E-5, 4.291534423828125E-5, 2.1457672119140625E-5, 1.0728836059570312E-5, 5.364418029785156E-6, 2.682209014892578E-6, 1.341104507446289E-6, 6.705522537231445E-7, 3.3527612686157227E-7];
+            params = {
+                'REQUEST': 'GetTile',
+                'SERVICE': 'WMTS',
+                'VERSION': '1.0.0',
+                'LAYER': layerName,
+                'STYLE': style,
+                'TILEMATRIX': gridsetName + ':{z}',
+                'TILEMATRIXSET': gridsetName,
+                'FORMAT': format,
+                'TILECOL': '{x}',
+                'TILEROW': '{y}'
+            };
+
+            function constructSource() {
+                var url = baseUrl + '?'
+                for (var param in params) {
+                    url = url + param + '=' + params[param] + '&';
+                }
+                url = url.slice(0, -1);
+
+                var source = new ol.source.VectorTile({
+                    url: url,
+                    format: new ol.format.MVT({}),
+                    projection: projection,
+                    tileGrid: new ol.tilegrid.WMTS({
+                        tileSize: [256, 256],
+                        origin: [-180.0, 90.0],
+                        resolutions: resolutions,
+                        matrixIds: gridNames
+                    }),
+                    wrapX: true
+                });
+                return source;
+            }
+
+            var layer = new ol.layer.VectorTile({
+                source: constructSource()
+            });
+
+            var view = new ol.View({
+                center: [0, 0],
+                zoom: 2,
+                projection: projection,
+                extent: [-180.0, -90.0, 180.0, 90.0]
+            });
+
+            var map = new ol.Map({
+                controls: ol.control.defaults({attribution: false}).extend([
+                    new ol.control.MousePosition(),
+                    new ScaleControl()
+                ]),
+                layers: [layer],
+                target: 'map',
+                view: view
+            });
+            map.getView().fit([97.4853057861328, 21.1021595001221, 106.240058898926, 29.2918682098389], map.getSize());
+
+            window.setParam = function (name, value) {
+                if (name == "STYLES") {
+                    name = "STYLE"
+                }
+                params[name] = value;
+                layer.setSource(constructSource());
+                map.updateSize();
+            }
+
+            map.on('singleclick', function (evt) {
+                document.getElementById('info').innerHTML = '';
+
+                var source = layer.getSource();
+                var resolution = view.getResolution();
+                var tilegrid = source.getTileGrid();
+                var tileResolutions = tilegrid.getResolutions();
+                var zoomIdx, diff = Infinity;
+
+                for (var i = 0; i < tileResolutions.length; i++) {
+                    var tileResolution = tileResolutions[i];
+                    var diffP = Math.abs(resolution - tileResolution);
+                    if (diffP < diff) {
+                        diff = diffP;
+                        zoomIdx = i;
+                    }
+                    if (tileResolution < resolution) {
+                        break;
+                    }
+                }
+                var tileSize = tilegrid.getTileSize(zoomIdx);
+                var tileOrigin = tilegrid.getOrigin(zoomIdx);
+
+                var fx = (evt.coordinate[0] - tileOrigin[0]) / (resolution * tileSize[0]);
+                var fy = (tileOrigin[1] - evt.coordinate[1]) / (resolution * tileSize[1]);
+                var tileCol = Math.floor(fx);
+                var tileRow = Math.floor(fy);
+                var tileI = Math.floor((fx - tileCol) * tileSize[0]);
+                var tileJ = Math.floor((fy - tileRow) * tileSize[1]);
+                var matrixIds = tilegrid.getMatrixIds()[zoomIdx];
+                var matrixSet = source.getMatrixSet();
+
+                var url = baseUrl + '?'
+                for (var param in params) {
+                    if (param.toUpperCase() == 'TILEMATRIX') {
+                        url = url + 'TILEMATRIX=' + matrixIds + '&';
+                    } else {
+                        url = url + param + '=' + params[param] + '&';
+                    }
+                }
+
+                url = url
+                    + 'SERVICE=WMTS&REQUEST=GetFeatureInfo'
+                    + '&INFOFORMAT=' + infoFormat
+                    + '&TileCol=' + tileCol
+                    + '&TileRow=' + tileRow
+                    + '&I=' + tileI
+                    + '&J=' + tileJ;
+
+                if (url) {
+                    document.getElementById('info').innerHTML = 'Loading... please wait...';
+                    var xmlhttp = new XMLHttpRequest();
+                    xmlhttp.onreadystatechange = function () {
+                        if (xmlhttp.readyState == XMLHttpRequest.DONE) {
+                            if (xmlhttp.status == 200) {
+                                document.getElementById('info').innerHTML = xmlhttp.responseText;
+                            }
+                            else {
+                                document.getElementById('info').innerHTML = '';
+                            }
+                        }
+                    }
+                    xmlhttp.open('GET', url, true);
+                    xmlhttp.send();
+                }
+            });
+        }
+    </script>
+</head>
+<body onload="init()">
+<div id="params">Modifiable Parameters:
+    <table>
+        <tr>
+            <td>STYLES:</td>
+            <td><select name="STYLES" onchange="window.setParam('STYLES', value)">
+                <option value="polygon" selected="selected">polygon</option>
+            </select>
+            </td>
+        </tr>
+    </table>
+</div>
+<div id="map"></div>
+<div id="info"></div>
+</body>
+</html>

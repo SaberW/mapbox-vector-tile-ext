@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+
 import java.io.File;
 
 /**
@@ -44,6 +45,7 @@ public class RegionCountyController extends VectorTileController {
                            @PathVariable("z") Integer z) {
         File parentFile = new File(cachePath + File.separator + layerName);
         if (!parentFile.exists()) parentFile.mkdir();
+
         File file = new File(cachePath + File.separator + layerName, String.format("%d-%d-%d", z, x, y) + ".mvt");
         if (!file.exists()) {
             regionCountyServices.listFeature(srsname, layerName, x, y, z);
