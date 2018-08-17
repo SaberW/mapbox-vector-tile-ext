@@ -231,7 +231,7 @@ public class GeoJsonServicesImpl<T extends GeometryEntity<ID>, ID extends Serial
                     try {
                         if (bytes.length > 0) {
                             geometry = wkbReader.read(bytes);
-                            Geometry geomPiex = geom2piex(geometry, piexls, z - 1);
+                            Geometry geomPiex = geom2piex(geometry, piexls, z);
                             encoder.addFeature(layerName, transBean2Map(t), geomPiex);
                         }
                     } catch (ParseException e) {

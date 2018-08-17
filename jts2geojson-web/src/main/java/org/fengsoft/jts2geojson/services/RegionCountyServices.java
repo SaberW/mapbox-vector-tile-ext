@@ -46,6 +46,6 @@ public class RegionCountyServices extends GeoJsonServicesImpl<RegionCounty, Inte
         SQLReady sqlReady = new SQLReady(sql);
         List<RegionCounty> res = sqlManager.execute(sqlReady, RegionCounty.class);
 
-        toMvt(res, bboxs, layerName, x, y, z);
+        toMvt2(res, bboxs, layerName, x, y, z);
     }
 }
