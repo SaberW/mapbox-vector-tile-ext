@@ -26,6 +26,7 @@
     <properties>
         <jts.version>1.15.0</jts.version>
         <vector-title.version>3.0.0</vector-title.version>
+        <geotool.version>20-SNAPSHOT</geotool.version>
     </properties>
 
     <dependencies>

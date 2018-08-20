@@ -22,7 +22,6 @@ import org.postgresql.util.PGobject;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.ReflectionUtils;
-
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
@@ -220,7 +219,7 @@ public class GeoJsonServicesImpl<T extends GeometryEntity<ID>, ID extends Serial
     }
 
     public void toMvt2(List<T> res, double[] bboxs, String layerName, Integer x, Integer y, Integer z) {
-        VectorTileEncoder encoder = new VectorTileEncoder();
+        VectorTileEncoder encoder = new VectorTileEncoder(4096, 128, true);
         double[] piexls = new double[]{x * 256, y * 256};
         for (T t : res) {
             synchronized (t) {
@@ -231,6 +230,7 @@ public class GeoJsonServicesImpl<T extends GeometryEntity<ID>, ID extends Serial
                     try {
                         if (bytes.length > 0) {
                             geometry = wkbReader.read(bytes);
+
                             Geometry geomPiex = geom2piex(geometry, piexls, z);
                             encoder.addFeature(layerName, transBean2Map(t), geomPiex);
                         }
@@ -308,6 +308,18 @@ public class GeoJsonServicesImpl<T extends GeometryEntity<ID>, ID extends Serial
 
     private Coordinate cooridinate2point(Coordinate coordinate, double[] pxy, int z) {
         double[] pielxs = globalGeodetic.lonlatToPixels(coordinate.x, coordinate.y, z);
+
+//        pielxs[0] = longitudeToPixelX(coordinate.x, z);
+//        pielxs[1] = latitudeToPixelY(coordinate.y, z);
         return new Coordinate((int) (pielxs[0] - pxy[0]), (int) (pielxs[1] - pxy[1]));
+    }
+
+    public double longitudeToPixelX(double longitude, int zoom) {
+        return (longitude + 180) / 360 * ((long) 256 << zoom);
+    }
+
+    public static double latitudeToPixelY(double latitude, int zoom) {
+        double sinLatitude = Math.sin(latitude * Math.PI / 180);
+        return (0.5 - Math.log((1 + sinLatitude) / (1 - sinLatitude)) / (4 * Math.PI)) * ((long) 256 << zoom);
     }
 }
