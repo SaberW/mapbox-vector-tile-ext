@@ -34,6 +34,6 @@ public class WaterLineServices extends GeoJsonServicesImpl<WaterLine, Integer> {
         SQLReady sqlReady = new SQLReady(sql);
         List<WaterLine> res = sqlManager.execute(sqlReady, WaterLine.class);
 
-        toMvt2(res, bboxs, layerName, x, y, z);
+        toMvt(res, bboxs, layerName, x, y, z);
     }
 }

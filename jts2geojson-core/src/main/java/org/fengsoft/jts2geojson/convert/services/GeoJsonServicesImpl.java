@@ -7,14 +7,16 @@ import com.wdtinc.mapbox_vector_tile.adapt.jts.UserDataKeyValueMapConverter;
 import com.wdtinc.mapbox_vector_tile.build.MvtLayerBuild;
 import com.wdtinc.mapbox_vector_tile.build.MvtLayerParams;
 import com.wdtinc.mapbox_vector_tile.build.MvtLayerProps;
-import no.ecc.vectortile.VectorTileEncoder;
 import org.fengsoft.jts2geojson.convert.common.GeometryConvert;
+import org.fengsoft.jts2geojson.convert.common.VectorTileEncoderNoClip;
 import org.fengsoft.jts2geojson.convert.entity.GeometryEntity;
 import org.fengsoft.jts2geojson.convert.tile.GlobalGeodetic;
 import org.fengsoft.jts2geojson.convert.tile.GlobalMercator;
 import org.geojson.Feature;
 import org.geojson.FeatureCollection;
 import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKBReader;
 import org.locationtech.jts.io.WKBWriter;
@@ -219,7 +221,7 @@ public class GeoJsonServicesImpl<T extends GeometryEntity<ID>, ID extends Serial
     }
 
     public void toMvt2(List<T> res, double[] bboxs, String layerName, Integer x, Integer y, Integer z) {
-        VectorTileEncoder encoder = new VectorTileEncoder(4096, 128, true);
+        VectorTileEncoderNoClip encoder = new VectorTileEncoderNoClip(4096, 128, false);
         double[] piexls = new double[]{x * 256, y * 256};
         for (T t : res) {
             synchronized (t) {
@@ -248,7 +250,6 @@ public class GeoJsonServicesImpl<T extends GeometryEntity<ID>, ID extends Serial
 
     private Geometry geom2piex(Geometry geometry, double[] pxy, int z) {
         if (geometry.getGeometryType().equals("Point")) {
-            new CoordinateSequences();
             return geometryFactory.createPoint(cooridinate2point(geometry.getCoordinate(), pxy, z));
         } else if (geometry.getGeometryType().equals("MultiPoint")) {
             Point[] ps = new Point[geometry.getCoordinates().length];
@@ -295,7 +296,6 @@ public class GeoJsonServicesImpl<T extends GeometryEntity<ID>, ID extends Serial
             for (int j = 0; j < linearRing.getCoordinates().length; j++) {
                 ps[j] = cooridinate2point(linearRing.getCoordinates()[j], pxy, z);
             }
-            ;
             lineStrings[i] = geometryFactory.createLinearRing(ps);
         }
 

@@ -33,6 +33,15 @@ public class RegionCountyController extends VectorTileController {
     }
 
 
+    /**
+     *  进来的是XYZ scheme
+     * @param srsname
+     * @param layerName
+     * @param x
+     * @param y
+     * @param z
+     * @return
+     */
     @RequestMapping(value = "polygon2/{z}/{x}/{y}.mvt",
             method = {RequestMethod.POST, RequestMethod.GET},
             produces = MediaType.APPLICATION_OCTET_STREAM_VALUE
@@ -45,6 +54,9 @@ public class RegionCountyController extends VectorTileController {
                            @PathVariable("z") Integer z) {
         File parentFile = new File(cachePath + File.separator + layerName);
         if (!parentFile.exists()) parentFile.mkdir();
+
+        //y = (int) Math.pow(2, z) - 1 - y;// TMS转XYZ
+        //y = (1 << z) - y - 1;            //将XYZ 转为 TMS
 
         File file = new File(cachePath + File.separator + layerName, String.format("%d-%d-%d", z, x, y) + ".mvt");
         if (!file.exists()) {

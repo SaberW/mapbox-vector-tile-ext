@@ -61,7 +61,6 @@ define(['json!model/data/abc.json'], function (Abc) {
     regionCountyLayer = new ol.layer.VectorTile({
         visible: true,
         renderMode: "image",
-        preload: 12,
         source: new ol.source.VectorTile({
             format: new ol.format.MVT(),
             url: contextPath + '/regionCounty/polygon2/{z}/{x}/{-y}.mvt?srsname=' + projection.getCode() + '&layerName=region_county',

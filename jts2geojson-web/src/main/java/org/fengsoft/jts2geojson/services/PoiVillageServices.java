@@ -34,6 +34,6 @@ public class PoiVillageServices extends GeoJsonServicesImpl<PoiVillage, Integer>
         SQLReady sqlReady = new SQLReady(sql);
         List<PoiVillage> res = sqlManager.execute(sqlReady, PoiVillage.class);
 
-        toMvt2(res, bboxs, layerName, x, y, z);
+        toMvt(res, bboxs, layerName, x, y, z);
     }
 }

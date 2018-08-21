@@ -37,4 +37,6 @@ require.config({
     }
 });
 
-require(['map2'])
+require(['map'],function (map) {
+
+})

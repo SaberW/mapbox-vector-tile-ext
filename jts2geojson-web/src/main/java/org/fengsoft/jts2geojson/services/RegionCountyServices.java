@@ -38,7 +38,7 @@ public class RegionCountyServices extends GeoJsonServicesImpl<RegionCounty, Inte
      */
     public void listFeature(String srsname, String layerName, Integer x, Integer y, Integer z) {
         //y = (int) Math.pow(2, z) - 1 - y;// TMS转XYZ
-        //y = (1 << z) - y - 1;            //将XYZ 转为 TMS
+//        y = (1 << z) - y - 1;            //将XYZ 转为 TMS
 
         //计算范围
         double[] bboxs = calBbox(srsname, x, y, z);
@@ -46,6 +46,6 @@ public class RegionCountyServices extends GeoJsonServicesImpl<RegionCounty, Inte
         SQLReady sqlReady = new SQLReady(sql);
         List<RegionCounty> res = sqlManager.execute(sqlReady, RegionCounty.class);
 
-        toMvt2(res, bboxs, layerName, x, y, z);
+        toMvt(res, bboxs, layerName, x, y, z);
     }
 }

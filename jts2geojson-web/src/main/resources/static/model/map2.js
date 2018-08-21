@@ -179,4 +179,6 @@ define(['json!model/data/abc.json'], function (Abc) {
     map.on('moveend', function (evt) {
         select.setActive(true);
     });
+
+    return map;
 })
