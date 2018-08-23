@@ -10,6 +10,10 @@
 
     <name>jts2geojson-web</name>
     <description>Demo project for Spring Boot</description>
+    <properties>
+
+        <github.global.server>github</github.global.server>
+    </properties>
 
     <parent>
         <groupId>org.fengsoft.geojson</groupId>
@@ -21,13 +25,13 @@
         <dependency>
             <groupId>cn.com.enersun.dgpmicro</groupId>
             <artifactId>common-geojson</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>1.0.1-RELEASE</version>
         </dependency>
 
         <dependency>
             <groupId>cn.com.enersun.dgpmicro</groupId>
             <artifactId>common-vectortile</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>1.0.1-RELEASE</version>
         </dependency>
 
         <dependency>
@@ -42,7 +46,6 @@
             <version>3.1.0</version>
         </dependency>
     </dependencies>
-
     <build>
         <finalName>jts2geojson</finalName>
         <plugins>
@@ -52,4 +55,11 @@
             </plugin>
         </plugins>
     </build>
+
+    <repositories>
+        <repository>
+            <id>mvn-repository-master</id>
+            <url>https://raw.github.com/polixiaohai/mvn-repository/master</url>
+        </repository>
+    </repositories>
 </project>

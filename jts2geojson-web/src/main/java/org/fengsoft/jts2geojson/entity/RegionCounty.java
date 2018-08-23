@@ -1,5 +1,8 @@
 package org.fengsoft.jts2geojson.entity;
 import java.util.Date;
+
+import cn.com.enersun.dgpmicro.entity.GeoJSONEntity;
+import cn.com.enersun.dgpmicro.entity.VectorTileEntity;
 import org.beetl.sql.core.annotatoin.Table;
 
 
@@ -8,7 +11,7 @@ import org.beetl.sql.core.annotatoin.Table;
 * gen by beetlsql 2018-08-14
 */
 @Table(name="region_county")
-public class RegionCounty implements GeometryEntity<Integer> {
+public class RegionCounty implements GeoJSONEntity<Integer>, VectorTileEntity<Integer> {
 	
 	private Integer id ;
 	private String name ;

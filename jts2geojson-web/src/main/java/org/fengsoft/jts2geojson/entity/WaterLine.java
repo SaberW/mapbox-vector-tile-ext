@@ -12,7 +12,7 @@ import org.beetl.sql.core.annotatoin.Table;
  * gen by beetlsql 2018-08-14
  */
 @Table(name = "water_line")
-public class WaterLine implements GeoJSONEntity<Integer>, VectorTileEntity<Integer> {
+public class WaterLine implements GeoJSONEntity<Integer>, VectorTileEntity<Integer>{
 
     private Integer id;
     private String comment;

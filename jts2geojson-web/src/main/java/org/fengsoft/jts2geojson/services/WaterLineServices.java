@@ -1,6 +1,5 @@
 package org.fengsoft.jts2geojson.services;
 
-import cn.com.enersun.dgpmicro.service.GeoJsonServicesImpl;
 import cn.com.enersun.dgpmicro.services.VectorTileServicesImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,8 +8,13 @@ import org.beetl.sql.core.SQLManager;
 import org.beetl.sql.core.SQLReady;
 import org.fengsoft.jts2geojson.entity.WaterLine;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 
 /**
@@ -20,9 +24,11 @@ import java.util.List;
 @Service
 @Transactional
 @Slf4j
-public class WaterLineServices extends GeoJsonServicesImpl<WaterLine, Integer> , VectorTileServicesImpl<WaterLine,Integer> {
+public class WaterLineServices extends VectorTileServicesImpl<WaterLine, Integer> {
     @Autowired
     private SQLManager sqlManager;
+    @Value("${cache.path}")
+    private String cachePath;
 
     public String allFeatures(String srsname, String bbox) throws JsonProcessingException {
         return new ObjectMapper().writeValueAsString(toFeatures(sqlManager.all(WaterLine.class)));
@@ -35,6 +41,12 @@ public class WaterLineServices extends GeoJsonServicesImpl<WaterLine, Integer> ,
         SQLReady sqlReady = new SQLReady(sql);
         List<WaterLine> res = sqlManager.execute(sqlReady, WaterLine.class);
 
-        toMvt(res, bboxs, layerName, x, y, z);
+        byte[] content = toMapBoxMvt(res, bboxs, layerName, x, y, z);
+
+        try {
+            Files.write(Paths.get(cachePath, layerName, String.format("%d-%d-%d", z, x, y) + ".mvt"),content);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
