@@ -19,8 +19,14 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.fengsoft.geojson</groupId>
-            <artifactId>jts2geojson-core</artifactId>
+            <groupId>cn.com.enersun.dgpmicro</groupId>
+            <artifactId>common-geojson</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>cn.com.enersun.dgpmicro</groupId>
+            <artifactId>common-vectortile</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
 

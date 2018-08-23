@@ -1,11 +1,11 @@
 package org.fengsoft.jts2geojson.services;
 
+import cn.com.enersun.dgpmicro.service.GeoJsonServicesImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.beetl.sql.core.SQLManager;
 import org.beetl.sql.core.SQLReady;
-import org.fengsoft.jts2geojson.convert.services.GeoJsonServicesImpl;
 import org.fengsoft.jts2geojson.entity.RegionCounty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

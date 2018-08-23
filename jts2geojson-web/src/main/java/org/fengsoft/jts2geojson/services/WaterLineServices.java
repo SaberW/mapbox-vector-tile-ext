@@ -1,11 +1,12 @@
 package org.fengsoft.jts2geojson.services;
 
+import cn.com.enersun.dgpmicro.service.GeoJsonServicesImpl;
+import cn.com.enersun.dgpmicro.services.VectorTileServicesImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.beetl.sql.core.SQLManager;
 import org.beetl.sql.core.SQLReady;
-import org.fengsoft.jts2geojson.convert.services.GeoJsonServicesImpl;
 import org.fengsoft.jts2geojson.entity.WaterLine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,7 @@ import java.util.List;
 @Service
 @Transactional
 @Slf4j
-public class WaterLineServices extends GeoJsonServicesImpl<WaterLine, Integer> {
+public class WaterLineServices extends GeoJsonServicesImpl<WaterLine, Integer> , VectorTileServicesImpl<WaterLine,Integer> {
     @Autowired
     private SQLManager sqlManager;
 

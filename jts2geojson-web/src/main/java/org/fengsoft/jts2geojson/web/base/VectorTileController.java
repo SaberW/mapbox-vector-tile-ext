@@ -1,4 +1,4 @@
-package org.fengsoft.jts2geojson.web;
+package org.fengsoft.jts2geojson.web.base;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;

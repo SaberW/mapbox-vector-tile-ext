@@ -3,7 +3,6 @@ package org.fengsoft.jts2geojson.entity;
 import java.math.*;
 import java.util.Date;
 import org.beetl.sql.core.annotatoin.Table;
-import cn.com.enersun.dgpmicro.entity.GeometryEntity;
 
 
 /*
