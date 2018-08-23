@@ -1,4 +1,4 @@
-package org.fengsoft.jts2geojson.convert.common;
+package org.fengsoft.jts2geojson.common;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

@@ -7,9 +7,10 @@
     <artifactId>jts2geojson</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <modules>
-        <module>jts2geojson-core</module>
+        <module>common-vectortile</module>
         <module>jts2geojson-web</module>
         <module>jts2geojson-mapbox</module>
+        <module>common-geojson</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -103,6 +104,10 @@
             <id>boundless</id>
             <name>Boundless Maven Repository</name>
             <url>http://repo.boundlessgeo.com/main</url>
+        </repository>
+        <repository>
+            <id>jerfer-mvn-repo</id>
+            <url>https://raw.githubusercontent.com/polixiaohai/mvn-repository/master/repository</url>
         </repository>
     </repositories>
 </project>

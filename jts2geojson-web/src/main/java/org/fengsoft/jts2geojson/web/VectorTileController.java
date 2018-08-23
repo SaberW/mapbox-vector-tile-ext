@@ -1,17 +1,11 @@
-package org.fengsoft.jts2geojson.convert.web;
+package org.fengsoft.jts2geojson.web;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.geojson.Feature;
-import org.geojson.FeatureCollection;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.io.File;
 import java.io.IOException;
 
@@ -39,33 +33,5 @@ public class VectorTileController {
         return ResponseEntity.ok().contentLength(file.contentLength())
                 .contentType(MediaType.parseMediaType(MediaType.APPLICATION_OCTET_STREAM_VALUE))
                 .body(new InputStreamResource(file.getInputStream()));
-    }
-
-    @RequestMapping("saveFeature")
-    @ResponseBody
-    public String saveFeature(@RequestParam String geoJson) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            Feature feature = objectMapper.readValue(geoJson, Feature.class);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return "";
-    }
-
-    @RequestMapping("saveFeatures")
-    @ResponseBody
-    public String saveFeatures(@RequestParam String geoJson) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            FeatureCollection featureCollection = objectMapper.readValue(geoJson, FeatureCollection.class);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return "";
     }
 }
