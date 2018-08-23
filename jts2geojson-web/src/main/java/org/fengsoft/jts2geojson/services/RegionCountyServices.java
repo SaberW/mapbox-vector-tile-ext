@@ -53,6 +53,7 @@ public class RegionCountyServices extends VectorTileServicesImpl<RegionCounty, I
         List<RegionCounty> res = sqlManager.execute(sqlReady, RegionCounty.class);
 
         byte[] content = toMapBoxMvt(res, bboxs, layerName, x, y, z);
+//        byte[] content = toGeoserverMvt(res, bboxs, layerName, x, y, z);
 
         try {
             Files.write(Paths.get(cachePath, layerName, String.format("%d-%d-%d", z, x, y) + ".mvt"),content);
