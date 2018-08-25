@@ -13,11 +13,10 @@ import org.beetl.sql.ext.spring4.BeetlSqlDataSource;
 import org.beetl.sql.ext.spring4.BeetlSqlScannerConfigurer;
 import org.beetl.sql.ext.spring4.SqlManagerFactoryBean;
 import org.fengsoft.jts2geojson.Application;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
-import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
 
@@ -54,25 +53,33 @@ public class BeetlConfig {
         return beetlSpringViewResolver;
     }
 
-    @Bean(name = "beetlSqlScannerConfigurer")
-    public BeetlSqlScannerConfigurer getBeetlSqlScannerConfigurer(Environment env) {
+    @Bean(name = "beetlSqlScannerConfigurerPG")
+    public BeetlSqlScannerConfigurer getBeetlSqlScannerConfigurerPG(Environment env) {
         BeetlSqlScannerConfigurer conf = new BeetlSqlScannerConfigurer();
-        conf.setBasePackage(env.getProperty("beetlsql.basePackage"));
-        conf.setDaoSuffix(env.getProperty("beetlsql.daoSuffix"));
-        conf.setSqlManagerFactoryBeanName("sqlManagerFactoryBean");
+        conf.setBasePackage(env.getProperty("beetlsql.pg.basePackage"));
+        conf.setDaoSuffix(env.getProperty("beetlsql.pg.daoSuffix"));
+        conf.setSqlManagerFactoryBeanName("sqlManagerFactoryBeanPG");
+        return conf;
+    }
+    @Bean(name = "beetlSqlScannerConfigurerSqlite")
+    public BeetlSqlScannerConfigurer getBeetlSqlScannerConfigurerSqlite(Environment env) {
+        BeetlSqlScannerConfigurer conf = new BeetlSqlScannerConfigurer();
+        conf.setBasePackage(env.getProperty("beetlsql.sqlite.basePackage"));
+        conf.setDaoSuffix(env.getProperty("beetlsql.sqlite.daoSuffix"));
+        conf.setSqlManagerFactoryBeanName("sqlManagerFactoryBeanSqlite");
         return conf;
     }
 
-    @Bean(name = "sqlManagerFactoryBean")
-    public SqlManagerFactoryBean getSqlManagerFactoryBean(DataSource datasource, Environment env) {
+    @Bean(name = "sqlManagerFactoryBeanPG")
+    public SqlManagerFactoryBean getSqlManagerFactoryBeanPG(@Qualifier("pg") DataSource datasource, Environment env) {
         SqlManagerFactoryBean factory = new SqlManagerFactoryBean();
 
         BeetlSqlDataSource source = new BeetlSqlDataSource();
         source.setMasterSource(datasource);
         factory.setCs(source);
         try {
-            factory.setDbStyle((DBStyle) (Application.class.getClassLoader()).loadClass(env.getProperty("beetlsql.dbStyle")).newInstance());
-            factory.setNc((NameConversion) (Application.class.getClassLoader().loadClass(env.getProperty("beetlsql.nameConversion")).newInstance()));//开启驼峰
+            factory.setDbStyle((DBStyle) (Application.class.getClassLoader()).loadClass(env.getProperty("beetlsql.pg.dbStyle")).newInstance());
+            factory.setNc((NameConversion) (Application.class.getClassLoader().loadClass(env.getProperty("beetlsql.pg.nameConversion")).newInstance()));//开启驼峰
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
@@ -80,25 +87,66 @@ public class BeetlConfig {
         } catch (InstantiationException e) {
             e.printStackTrace();
         }
-        factory.setInterceptors(new Interceptor[]{new DebugInterceptor()});
+        Boolean isDev = Boolean.parseBoolean(env.getProperty("beetl-beetlsq", "dev=false").split("=")[1]);
+        factory.setInterceptors(isDev ? new Interceptor[]{new DebugInterceptor()} : new Interceptor[]{});
 
-        factory.setSqlLoader(new ClasspathLoader(env.getProperty("beetlsql.sqlPath")));//sql文件路径
+        factory.setSqlLoader(new ClasspathLoader(env.getProperty("beetlsql.pg.sqlPath")));//sql文件路径
         return factory;
     }
 
-    @Bean
-    public DataSource datasource(Environment env) {
-        HikariDataSource ds = new HikariDataSource();
-        ds.setJdbcUrl(env.getProperty("spring.datasource.url"));
-        ds.setUsername(env.getProperty("spring.datasource.username"));
-        ds.setPassword(env.getProperty("spring.datasource.password"));
-        ds.setDriverClassName(env.getProperty("spring.datasource.driver-class-name"));
+    @Bean(name = "sqlManagerFactoryBeanSqlite")
+    public SqlManagerFactoryBean getSqlManagerFactoryBean(@Qualifier("sqlite") DataSource datasource, Environment env) {
+        SqlManagerFactoryBean factory = new SqlManagerFactoryBean();
 
-        ds.setConnectionTimeout(Long.parseLong(env.getProperty("spring.datasource.hikari.connection-timeout")));
-        ds.setIdleTimeout(Long.parseLong(env.getProperty("spring.datasource.hikari.idle-timeout")));
-        ds.setMaxLifetime(Long.parseLong(env.getProperty("spring.datasource.hikari.max-lifetime")));
-        ds.setMaximumPoolSize(Integer.parseInt(env.getProperty("spring.datasource.hikari.maximum-pool-size")));
-        ds.setMinimumIdle(Integer.parseInt(env.getProperty("spring.datasource.hikari.minimum-idle")));
+        BeetlSqlDataSource source = new BeetlSqlDataSource();
+        source.setMasterSource(datasource);
+        factory.setCs(source);
+        try {
+            factory.setDbStyle((DBStyle) (Application.class.getClassLoader()).loadClass(env.getProperty("beetlsql.sqlite.dbStyle")).newInstance());
+            factory.setNc((NameConversion) (Application.class.getClassLoader().loadClass(env.getProperty("beetlsql.sqlite.nameConversion")).newInstance()));//开启驼峰
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        }
+        Boolean isDev = Boolean.parseBoolean(env.getProperty("beetl-beetlsq", "dev=false").split("=")[1]);
+        factory.setInterceptors(isDev ? new Interceptor[]{new DebugInterceptor()} : new Interceptor[]{});
+
+        factory.setSqlLoader(new ClasspathLoader(env.getProperty("beetlsql.sqlite.sqlPath")));//sql文件路径
+        return factory;
+    }
+
+    @Bean("pg")
+    public DataSource datasourcePG(Environment env) {
+        HikariDataSource ds = new HikariDataSource();
+        ds.setJdbcUrl(env.getProperty("spring.datasource.pg.url"));
+        ds.setUsername(env.getProperty("spring.datasource.pg.username"));
+        ds.setPassword(env.getProperty("spring.datasource.pg.password"));
+        ds.setDriverClassName(env.getProperty("spring.datasource.pg.driver-class-name"));
+
+        ds.setConnectionTimeout(Long.parseLong(env.getProperty("spring.datasource.pg.hikari.connection-timeout")));
+        ds.setIdleTimeout(Long.parseLong(env.getProperty("spring.datasource.pg.hikari.idle-timeout")));
+        ds.setMaxLifetime(Long.parseLong(env.getProperty("spring.datasource.pg.hikari.max-lifetime")));
+        ds.setMaximumPoolSize(Integer.parseInt(env.getProperty("spring.datasource.pg.hikari.maximum-pool-size")));
+        ds.setMinimumIdle(Integer.parseInt(env.getProperty("spring.datasource.pg.hikari.minimum-idle")));
+        return ds;
+    }
+
+    @Bean("sqlite")
+    public DataSource datasourceSqlite(Environment env) {
+        HikariDataSource ds = new HikariDataSource();
+        ds.setJdbcUrl(env.getProperty("spring.datasource.sqlite.url"));
+        ds.setUsername(env.getProperty("spring.datasource.sqlite.username"));
+        ds.setPassword(env.getProperty("spring.datasource.sqlite.password"));
+        ds.setDriverClassName(env.getProperty("spring.datasource.sqlite.driver-class-name"));
+
+        ds.setConnectionTimeout(Long.parseLong(env.getProperty("spring.datasource.sqlite.hikari.connection-timeout")));
+        ds.setIdleTimeout(Long.parseLong(env.getProperty("spring.datasource.sqlite.hikari.idle-timeout")));
+        ds.setMaxLifetime(Long.parseLong(env.getProperty("spring.datasource.sqlite.hikari.max-lifetime")));
+        ds.setMaximumPoolSize(Integer.parseInt(env.getProperty("spring.datasource.sqlite.hikari.maximum-pool-size")));
+        ds.setMinimumIdle(Integer.parseInt(env.getProperty("spring.datasource.sqlite.hikari.minimum-idle")));
         return ds;
     }
 }

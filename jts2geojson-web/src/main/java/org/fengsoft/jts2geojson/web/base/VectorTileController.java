@@ -14,7 +14,7 @@ import java.io.IOException;
  * @Date 2018/8/15---10:55
  */
 public class VectorTileController {
-    @Value("${cache.path}")
+    @Value("${cache.vector-tile-path}")
     public String cachePath;
 
     @RequestMapping(

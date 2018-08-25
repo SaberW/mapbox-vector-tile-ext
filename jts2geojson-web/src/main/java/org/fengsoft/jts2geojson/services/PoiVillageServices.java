@@ -8,6 +8,7 @@ import org.beetl.sql.core.SQLManager;
 import org.beetl.sql.core.SQLReady;
 import org.fengsoft.jts2geojson.entity.PoiVillage;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,8 +27,9 @@ import java.util.List;
 @Slf4j
 public class PoiVillageServices extends VectorTileServicesImpl<PoiVillage, Integer> {
     @Autowired
+    @Qualifier("sqlManagerFactoryBeanPG")
     private SQLManager sqlManager;
-    @Value("${cache.path}")
+    @Value("${cache.vector-tile-path}")
     private String cachePath;
 
     public String allFeatures(String srsname, String bbox) throws JsonProcessingException {

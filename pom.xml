@@ -81,7 +81,7 @@
         </repository>
         <repository>
             <id>maven-repo-master</id>
-            <url>https://raw.github.com/polixiaohai/maven-repo/master/</url>
+            <url>https://raw.github.com/polixiaohai/mvn-repository/master/</url>
         </repository>
     </repositories>
 </project>
