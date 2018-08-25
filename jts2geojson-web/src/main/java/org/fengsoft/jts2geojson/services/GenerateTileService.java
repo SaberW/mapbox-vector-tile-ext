@@ -62,9 +62,7 @@ public class GenerateTileService {
 
         for (int ty = tmaxy; ty > tminy - 1; ty--) {
             for (int tx = tminx; tx < tmaxx + 1; tx++) {
-                int[] gootleXY = mercator.googleTile(tx, ty, tz);
-                String code = mercator.tileXYToQuadKey(gootleXY[0], gootleXY[1], tz);
-                savePng(code, gootleXY[0], gootleXY[1], tz);
+                generateTile(tx, ty, tz);
             }
         }
 
@@ -72,18 +70,28 @@ public class GenerateTileService {
             int[] tminxytmaxxy = tminmax.get(tz);
             for (int ty = tminxytmaxxy[3]; ty > tminxytmaxxy[1] - 1; ty--) {
                 for (int tx = tminxytmaxxy[0]; tx < tminxytmaxxy[2] + 1; tx++) {
-                    int[] gootleXY = mercator.googleTile(tx, ty, tz);
-                    String code = mercator.tileXYToQuadKey(gootleXY[0], gootleXY[1], tz);
-                    savePng(code, gootleXY[0], gootleXY[1], tz);
+                    generateTile(tx, ty, tz);
                 }
             }
         }
     }
 
-    private void savePng(String code, int tx, int ty, int tz) {
-        String bingUrl = "https://dynamic.t0.tiles.ditu.live.com/comp/ch/" + code + "?mkt=zh-CN&ur=cn&it=G,TW,BX,L&cstl=w4c";
-        String googleUrl = "http://www.google.cn/maps/vt/pb=!1m4!1m3!1i" + tz + "!2i" + tx + "!3i" + ty + "!2m3!1e0!2sm!3i380072576!3m8!2szh-CN!3scn!5e1105!12m4!1e68!2m2!1sset!2sRoadmap!4e0!5m1!1e0";
-        Request request = new Request.Builder().url(googleUrl).build();
+    private void generateTile(int tx, int ty, int tz) {
+        int[] gootleXY = mercator.googleTile(tx, ty, tz);
+        String code = mercator.tileXYToQuadKey(gootleXY[0], gootleXY[1], tz);
+
+//        String url = "http://t2.tianditu.gov.cn/DataServer?T=cva_w&x=25732&y=14028&l=15";
+//        url = "http://t3.tianditu.gov.cn/DataServer?T=vec_w&x=25736&y=14029&l=15";
+
+//        String url = "https://c.tile.openstreetmap.org/" + tz + "/" + tx + "/" + ty + ".png";
+        String url = "https://dynamic.t0.tiles.ditu.live.com/comp/ch/" + code + "?mkt=zh-CN&ur=cn&it=G,TW,BX,L&cstl=w4c";
+//        String url = "http://www.google.cn/maps/vt/pb=!1m4!1m3!1i" + tz + "!2i" + gootleXY[0] + "!3i" + gootleXY[1] + "!2m3!1e0!2sm!3i380072576!3m8!2szh-CN!3scn!5e1105!12m4!1e68!2m2!1sset!2sRoadmap!4e0!5m1!1e0";
+        savePng(tx, ty, tz, url);
+    }
+
+
+    private void savePng(int tx, int ty, int tz, String url) {
+        Request request = new Request.Builder().url(url).build();
         Call call = okHttpClient.newCall(request);
         call.enqueue(new Callback() {
             @Override
@@ -103,37 +111,6 @@ public class GenerateTileService {
                             parent.mkdir();
                         }
                         FileImageOutputStream imageOutput = new FileImageOutputStream(new File(parent, String.format("%d-%d.%s", tx, ty, "png")));
-                        imageOutput.write(data, 0, data.length);
-                        imageOutput.close();
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
-                }
-            }
-        });
-    }
-
-    private void savePng(String code, int tz) {
-        Request request = new Request.Builder().url("https://dynamic.t0.tiles.ditu.live.com/comp/ch/" + code + "?mkt=zh-CN&ur=cn&it=G,TW,BX,L&cstl=w4c").build();
-        Call call = okHttpClient.newCall(request);
-        call.enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                synchronized (this) {
-                    //得到从网上获取资源，转换成我们想要的类型
-                    byte[] data = response.body().bytes();
-
-                    try {
-                        File parent = new File(imageTilePath, String.valueOf(tz));
-                        if (!parent.exists()) {
-                            parent.mkdir();
-                        }
-                        FileImageOutputStream imageOutput = new FileImageOutputStream(new File(parent, String.format("%s.%s", code, "png")));
                         imageOutput.write(data, 0, data.length);
                         imageOutput.close();
                     } catch (Exception ex) {
