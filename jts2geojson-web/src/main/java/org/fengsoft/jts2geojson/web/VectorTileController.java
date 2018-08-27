@@ -8,9 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.ModelAndView;
-
-import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 
 @Controller
@@ -18,14 +15,6 @@ import java.io.File;
 public class VectorTileController extends TileDownloadController {
     @Autowired
     private RegionCountyServices regionCountyServices;
-
-    @RequestMapping(value = "index")
-    private ModelAndView index(HttpServletRequest request) {
-        ModelAndView modelAndView = new ModelAndView();
-        modelAndView.setViewName("index");
-        modelAndView.addObject("ctxPath", request.getContextPath());
-        return modelAndView;
-    }
 
     @RequestMapping("polygon")
     @ResponseBody

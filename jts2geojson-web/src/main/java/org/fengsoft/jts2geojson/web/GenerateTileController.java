@@ -5,9 +5,6 @@ import org.locationtech.jts.geom.Envelope;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.servlet.ModelAndView;
-
-import javax.servlet.http.HttpServletRequest;
 
 @Controller
 @RequestMapping(value = "generate")
@@ -27,13 +24,5 @@ public class GenerateTileController {
     public void tile(Double xmin, Double xmax, Double ymin, Double ymax) {
         Envelope envelope = new Envelope(xmin, xmax, ymin, ymax);
         generateTileService.run(envelope, "EPSG:4326");
-    }
-
-    @RequestMapping(value = "index")
-    private ModelAndView generate(HttpServletRequest request) {
-        ModelAndView modelAndView = new ModelAndView();
-        modelAndView.setViewName("index");
-        modelAndView.addObject("ctxPath", request.getContextPath());
-        return modelAndView;
     }
 }

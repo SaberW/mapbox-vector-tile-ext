@@ -1,6 +1,5 @@
-define(function () {
-    var map, draw, tempLayer;
-    var Map = require("model/map")
+define(['map'], function (Map) {
+    var map = Map.map, draw, projection = Map.projection, tempLayer = Map.tempLayer;
 
     var tileLayer = new ol.layer.Tile({
         source: new ol.source.XYZ({
@@ -11,9 +10,6 @@ define(function () {
         }),
         projection: projection
     })
-
-    map = Map.map;
-    tempLayer = Map.tempLayer;
 
     function addInteraction() {
         if (draw) map.removeInteraction(draw)

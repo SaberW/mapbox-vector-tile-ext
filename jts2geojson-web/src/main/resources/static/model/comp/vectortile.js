@@ -1,56 +1,29 @@
-define(function () {
-    var map, projection, select, tempLayer, waterLineLayer, regionCountyLayer, poiVillageLayer;
-    var Map = require("model/map")
-    map = Map.map;
-    projection = Map.projection;
-    tempLayer = Map.tempLayer;
+define(['map'], function (Map) {
+    var map = Map.map, projection = Map.projection, select, tempLayer = Map.tempLayer, vectorTileLayer;
+    var vectorTileSource;
 
-    waterLineLayer = new ol.layer.VectorTile({
-        visible: false,
-        renderMode: "image",
-        preload: 12,
-        source: new ol.source.VectorTile({
+    function constructorSource(url) {
+        if (vectorTileLayer) map.removeLayer(vectorTileLayer)
+        vectorTileSource = new ol.source.VectorTile({
             format: new ol.format.MVT(),
-            url: contextPath + '/waterLine/line2/{z}/{x}/{-y}.mvt?srsname=' + projection.getCode() + '&layerName=water_line',
+            url: url,
             projection: projection,
             extent: ol.proj.get("EPSG:4326").getExtent(),
             tileSize: 256,
             maxZoom: 21,
             minZoom: 0,
             wrapX: true
-        }),
-    })
+        })
 
-    regionCountyLayer = new ol.layer.VectorTile({
-        visible: true,
-        renderMode: "image",
-        source: new ol.source.VectorTile({
-            format: new ol.format.MVT(),
-            url: contextPath + '/regionCounty/polygon2/{z}/{x}/{-y}.mvt?srsname=' + projection.getCode() + '&layerName=region_county',
-            projection: projection,
-            extent: ol.proj.get("EPSG:4326").getExtent(),
-            tileSize: 256,
-            maxZoom: 21,
-            minZoom: 0,
-            wrapX: true
-        }),
-    })
+        vectorTileLayer = new ol.layer.VectorTile({
+            renderMode: "image",
+            preload: 12,
+            source: vectorTileSource
+        })
 
-    poiVillageLayer = new ol.layer.VectorTile({
-        visible: false,
-        renderMode: "image",
-        preload: 12,
-        source: new ol.source.VectorTile({
-            format: new ol.format.MVT(),
-            url: contextPath + '/poiVillage/poi2/{z}/{x}/{-y}.mvt?srsname=' + projection.getCode() + '&layerName=poi_village',
-            projection: projection,
-            extent: ol.proj.get("EPSG:4326").getExtent(),
-            tileSize: 256,
-            maxZoom: 21,
-            minZoom: 0,
-            wrapX: true
-        }),
-    })
+        map.addLayer(vectorTileLayer);
+    }
+
 
     select = new ol.interaction.Select();
     select.on("select", function (e) {
@@ -103,4 +76,6 @@ define(function () {
     map.on('moveend', function (evt) {
         select.setActive(true);
     });
+
+    constructorSource(contextPath + '/vectortile/polygon2/{z}/{x}/{-y}.mvt?srsname=' + projection.getCode() + '&layerName=region_county');
 })
