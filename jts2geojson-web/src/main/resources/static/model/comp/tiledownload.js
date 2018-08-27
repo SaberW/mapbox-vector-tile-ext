@@ -11,6 +11,8 @@ define(['map'], function (Map) {
         projection: projection
     })
 
+    map.addLayer(tileLayer);
+
     function addInteraction() {
         if (draw) map.removeInteraction(draw)
         draw = new ol.interaction.Draw({
