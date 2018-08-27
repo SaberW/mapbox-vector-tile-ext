@@ -3,23 +3,29 @@ package org.fengsoft.jts2geojson.web;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.fengsoft.jts2geojson.common.AnotherException;
 import org.fengsoft.jts2geojson.services.RegionCountyServices;
-import org.fengsoft.jts2geojson.web.base.VectorTileController;
+import org.fengsoft.jts2geojson.web.base.TileDownloadController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 
-/**
- * @Author JerFer
- * @Date 2018/7/30---16:48
- */
 @Controller
-@RequestMapping(value = "regionCounty")
-public class RegionCountyController extends VectorTileController {
+@RequestMapping(value = "vectortile")
+public class VectorTileController extends TileDownloadController {
     @Autowired
     private RegionCountyServices regionCountyServices;
+
+    @RequestMapping(value = "index")
+    private ModelAndView index(HttpServletRequest request) {
+        ModelAndView modelAndView = new ModelAndView();
+        modelAndView.setViewName("index");
+        modelAndView.addObject("ctxPath", request.getContextPath());
+        return modelAndView;
+    }
 
     @RequestMapping("polygon")
     @ResponseBody

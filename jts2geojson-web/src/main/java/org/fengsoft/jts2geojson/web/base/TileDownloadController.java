@@ -13,7 +13,7 @@ import java.io.IOException;
  * @Author JerFer
  * @Date 2018/8/15---10:55
  */
-public class VectorTileController {
+public class TileDownloadController {
     @Value("${cache.vector-tile-path}")
     public String cachePath;
 

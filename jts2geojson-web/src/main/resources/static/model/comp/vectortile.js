@@ -1,46 +1,9 @@
-define(['json!model/data/abc.json'], function (Abc) {
-    var map, view, projection, baseLayer, gridLayer, regionCountyLayer, waterLineLayer, poiVillageLayer, tempLayer;
-    var select;
-    projection = new ol.proj.Projection({
-        code: "EPSG:4326",
-        units: "degrees",
-        axisOrientation: 'neu',
-        global: true
-    });
-    //建立地图视图
-    view = new ol.View({
-        center: [0, 0],
-        zoom: 12,
-        projection: projection,
-        extent: [-180.0, -90.0, 180.0, 90.0]
-    });
-
-    // baseLayer = new ol.layer.Tile({
-    //     extent: [97.52865599987456, 21.142702999943538, 106.19671199955917, 29.25132500004878],
-    //     source: new ol.source.TileArcGISRest({
-    //         url: 'http://10.111.106.82:6080/arcgis/rest/services/yunnan_vector/MapServer',
-    //         params: {
-    //             time: (new Date("2011/01/24 00:00:00 UTC").getTime()) + "," + (new Date("2012/07/16 00:00:00 UTC").getTime())
-    //         }
-    //     })
-    // });
-
-    baseLayer = new ol.layer.Tile({
-        source: new ol.source.OSM({
-            projection: projection
-        }),
-        projection: projection
-    })
-
-    gridLayer = new ol.layer.Tile({
-        //瓦片网格数据源
-        source: new ol.source.TileDebug({
-            //投影
-            projection: 'EPSG:4326',
-            //获取瓦片网格信息
-            tileGrid: baseLayer.getSource().getTileGrid()
-        })
-    })
+define(function () {
+    var map, projection, select, tempLayer, waterLineLayer, regionCountyLayer, poiVillageLayer;
+    var Map = require("model/map")
+    map = Map.map;
+    projection = Map.projection;
+    tempLayer = Map.tempLayer;
 
     waterLineLayer = new ol.layer.VectorTile({
         visible: false,
@@ -53,6 +16,7 @@ define(['json!model/data/abc.json'], function (Abc) {
             extent: ol.proj.get("EPSG:4326").getExtent(),
             tileSize: 256,
             maxZoom: 21,
+            minZoom: 0,
             wrapX: true
         }),
     })
@@ -60,7 +24,6 @@ define(['json!model/data/abc.json'], function (Abc) {
     regionCountyLayer = new ol.layer.VectorTile({
         visible: true,
         renderMode: "image",
-        preload: 12,
         source: new ol.source.VectorTile({
             format: new ol.format.MVT(),
             url: contextPath + '/regionCounty/polygon2/{z}/{x}/{-y}.mvt?srsname=' + projection.getCode() + '&layerName=region_county',
@@ -68,6 +31,7 @@ define(['json!model/data/abc.json'], function (Abc) {
             extent: ol.proj.get("EPSG:4326").getExtent(),
             tileSize: 256,
             maxZoom: 21,
+            minZoom: 0,
             wrapX: true
         }),
     })
@@ -83,50 +47,10 @@ define(['json!model/data/abc.json'], function (Abc) {
             extent: ol.proj.get("EPSG:4326").getExtent(),
             tileSize: 256,
             maxZoom: 21,
+            minZoom: 0,
             wrapX: true
         }),
     })
-
-    tempLayer = new ol.layer.Vector({
-        source: new ol.source.Vector({wrapX: true}),
-        style: function (feature, res) {
-            return new ol.style.Style({
-                stroke: new ol.style.Stroke({
-                    color: "#ff0000",
-                    width: 4
-                }),
-                fill: new ol.style.Fill({
-                    color: "#ffff00"
-                }),
-                image: new ol.style.Circle({
-                    radius: 6,   //填充图案样式
-                    fill: new ol.style.Fill({color: '#ffcc33'}),
-                    stroke: new ol.style.Stroke({
-                        color: "#ff0000",
-                        width: 2
-                    }),
-                }),
-                text: new ol.style.Text({
-                    text: feature.get("name"),
-                    font: 'normal normal bold 12px arial,sans-serif',
-                    offsetY: -30,
-                    fill: new ol.style.Fill({color: '#000000'})
-                })
-            })
-        }
-    })
-
-    map = new ol.Map({
-        target: "map",
-        layers: [baseLayer,
-            regionCountyLayer, waterLineLayer, poiVillageLayer,
-            // gridLayer,
-            tempLayer],
-        view: view,
-        projection: projection
-    })
-
-    map.getView().fit([97.528656 + 1, 21.142703 + 1, 106.196712 + 1, 29.251325 + 1], map.getSize());
 
     select = new ol.interaction.Select();
     select.on("select", function (e) {
@@ -179,6 +103,4 @@ define(['json!model/data/abc.json'], function (Abc) {
     map.on('moveend', function (evt) {
         select.setActive(true);
     });
-
-    return map;
 })

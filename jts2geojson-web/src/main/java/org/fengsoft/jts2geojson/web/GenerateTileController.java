@@ -32,7 +32,7 @@ public class GenerateTileController {
     @RequestMapping(value = "index")
     private ModelAndView generate(HttpServletRequest request) {
         ModelAndView modelAndView = new ModelAndView();
-        modelAndView.setViewName("generate");
+        modelAndView.setViewName("index");
         modelAndView.addObject("ctxPath", request.getContextPath());
         return modelAndView;
     }
