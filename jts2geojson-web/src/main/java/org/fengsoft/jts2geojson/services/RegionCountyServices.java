@@ -45,9 +45,6 @@ public class RegionCountyServices extends VectorTileServicesImpl<RegionCounty, I
      * @param z
      */
     public void listFeature(String srsname, String layerName, Integer x, Integer y, Integer z) {
-        //y = (int) Math.pow(2, z) - 1 - y;// TMS转XYZ
-//        y = (1 << z) - y - 1;            //将XYZ 转为 TMS
-
         //计算范围
         double[] bboxs = calBbox(srsname, x, y, z);
         String sql = "SELECT t.id,t.name,t.shape FROM " + layerName + " t  WHERE ST_Intersects (shape,ST_MakeEnvelope(" + bboxs[1] + "," + bboxs[0] + "," + bboxs[3] + "," + bboxs[2] + "," + srsname.split(":")[1] + "))";
