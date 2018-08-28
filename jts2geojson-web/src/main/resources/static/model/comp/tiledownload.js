@@ -21,20 +21,25 @@ define(['map'], function (Map) {
             geometryFunction: ol.interaction.Draw.createBox()
         });
         draw.on("drawend", function (re) {
+
             var ext = re.feature.getGeometry().getExtent()
             tempLayer.getSource().clear();
-            $.ajax({
-                url: contextPath + "/generate/tile",
-                data: {
-                    xmin: ext[0],
-                    xmax: ext[2],
-                    ymin: ext[1],
-                    ymax: ext[3]
-                },
-                type: "GET"
-            }).done(function (re) {
-                console.log(re)
-            })
+            var tileName = $("#tool-draw-tile-name").val();
+            if (tileName) {
+                $.ajax({
+                    url: contextPath + "/generate/tile",
+                    data: {
+                        tileName: tileName,
+                        xmin: ext[0],
+                        xmax: ext[2],
+                        ymin: ext[1],
+                        ymax: ext[3]
+                    },
+                    type: "GET"
+                }).done(function (re) {
+                    console.log(re)
+                });
+            }
         })
         map.addInteraction(draw);
     }

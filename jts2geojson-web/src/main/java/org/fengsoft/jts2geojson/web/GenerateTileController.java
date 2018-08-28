@@ -1,5 +1,6 @@
 package org.fengsoft.jts2geojson.web;
 
+import org.fengsoft.jts2geojson.common.TileType;
 import org.fengsoft.jts2geojson.services.GenerateTileService;
 import org.locationtech.jts.geom.Envelope;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +22,8 @@ public class GenerateTileController {
      * @param ymax
      */
     @RequestMapping(value = "tile")
-    public void tile(Double xmin, Double xmax, Double ymin, Double ymax) {
+    public void tile(String tileName, Double xmin, Double xmax, Double ymin, Double ymax) {
         Envelope envelope = new Envelope(xmin, xmax, ymin, ymax);
-        generateTileService.run(envelope, "EPSG:4326");
+        generateTileService.run(tileName, envelope, "EPSG:4326", TileType.BING);
     }
 }

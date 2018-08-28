@@ -2,10 +2,12 @@ package org.fengsoft.jts2geojson.services;
 
 import cn.com.enersun.dgpmicro.common.GlobalMercator;
 import okhttp3.*;
+import org.fengsoft.jts2geojson.common.TileType;
 import org.locationtech.jts.geom.Envelope;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.imageio.stream.FileImageOutputStream;
 import java.io.File;
@@ -30,7 +32,12 @@ public class GenerateTileService {
     private int tmaxz = 20;
 
 
-    public void run(Envelope envelope, String epsg) {
+    public void run(String tileName, Envelope envelope, String epsg, TileType tileType) {
+        File file = new File(imageTilePath);
+        if (!file.exists()) file.mkdirs();
+
+        File subDir = new File(imageTilePath, tileName);
+        if (!subDir.exists()) subDir.mkdir();
 
         mercator = new GlobalMercator(256);
 
@@ -62,7 +69,7 @@ public class GenerateTileService {
 
         for (int ty = tmaxy; ty > tminy - 1; ty--) {
             for (int tx = tminx; tx < tmaxx + 1; tx++) {
-                generateTile(tx, ty, tz);
+                generateTile(subDir.getAbsolutePath(), tx, ty, tz, tileType);
             }
         }
 
@@ -70,27 +77,33 @@ public class GenerateTileService {
             int[] tminxytmaxxy = tminmax.get(tz);
             for (int ty = tminxytmaxxy[3]; ty > tminxytmaxxy[1] - 1; ty--) {
                 for (int tx = tminxytmaxxy[0]; tx < tminxytmaxxy[2] + 1; tx++) {
-                    generateTile(tx, ty, tz);
+                    generateTile(subDir.getAbsolutePath(), tx, ty, tz, tileType);
                 }
             }
         }
     }
 
-    private void generateTile(int tx, int ty, int tz) {
+    private void generateTile(String cacheDir, int tx, int ty, int tz, TileType tileType) {
+        String url = "";
         int[] gootleXY = mercator.googleTile(tx, ty, tz);
-        String code = mercator.tileXYToQuadKey(gootleXY[0], gootleXY[1], tz);
-
-//        String url = "http://t2.tianditu.gov.cn/DataServer?T=cva_w&x=25732&y=14028&l=15";
-//        url = "http://t3.tianditu.gov.cn/DataServer?T=vec_w&x=25736&y=14029&l=15";
-
-//        String url = "https://c.tile.openstreetmap.org/" + tz + "/" + tx + "/" + ty + ".png";
-        String url = "https://dynamic.t0.tiles.ditu.live.com/comp/ch/" + code + "?mkt=zh-CN&ur=cn&it=G,TW,BX,L&cstl=w4c";
-//        String url = "http://www.google.cn/maps/vt/pb=!1m4!1m3!1i" + tz + "!2i" + gootleXY[0] + "!3i" + gootleXY[1] + "!2m3!1e0!2sm!3i380072576!3m8!2szh-CN!3scn!5e1105!12m4!1e68!2m2!1sset!2sRoadmap!4e0!5m1!1e0";
-        savePng(tx, ty, tz, url);
+        if (tileType.getType().equals(TileType.BING.getType())) {
+            String code = mercator.tileXYToQuadKey(gootleXY[0], gootleXY[1], tz);
+            url = String.format(tileType.getUrl(), code);
+        } else if (tileType.getType().equals(TileType.GOOGLE.getType())) {
+            url = String.format(tileType.getUrl(), tz, gootleXY[0], gootleXY[1]);
+        } else if (tileType.getType().equals(TileType.OSM.getType())) {
+            url = String.format(tileType.getUrl(), tz, tx, ty);
+        } else if (tileType.getType().equals(TileType.TDTCVR.getType())) {
+            url = String.format(tileType.getUrl(), tx, ty, tz);
+        } else if (tileType.getType().equals(TileType.TDTVEC.getType())) {
+            url = String.format(tileType.getUrl(), tx, ty, tz);
+        }
+        if (!StringUtils.isEmpty(url))
+            savePng(cacheDir, tx, ty, tz, url);
     }
 
 
-    private void savePng(int tx, int ty, int tz, String url) {
+    private void savePng(String cacheDir, int tx, int ty, int tz, String url) {
         Request request = new Request.Builder().url(url).build();
         Call call = okHttpClient.newCall(request);
         call.enqueue(new Callback() {
@@ -106,7 +119,7 @@ public class GenerateTileService {
                     byte[] data = response.body().bytes();
 
                     try {
-                        File parent = new File(imageTilePath, String.valueOf(tz));
+                        File parent = new File(cacheDir, String.valueOf(tz));
                         if (!parent.exists()) {
                             parent.mkdir();
                         }
