@@ -1,5 +1,5 @@
 define(function () {
-    var map, view, projection, baseTileRoad, baseTileLabel, tempLayer;
+    var map, view, projection, baseTileRoad, baseTileLabel, googleTile, tempLayer;
     projection = new ol.proj.Projection({
         code: "EPSG:4326",
         units: "degrees",
@@ -25,6 +25,12 @@ define(function () {
         source: new ol.source.XYZ({
             title: "天地图文字标注",
             url: "http://t5.tianditu.com/DataServer?T=cva_w&x={x}&y={y}&l={z}"
+        })
+    })
+
+    googleTile = new ol.layer.Tile({
+        source: new ol.source.XYZ({
+            url: "http://www.google.cn/maps/vt/pb=!1m4!1m3!1i{z}!2i{x}!3i{y}!2m3!1e0!2sm!3i380072576!3m8!2szh-CN!3scn!5e1105!12m4!1e68!2m2!1sset!2sRoadmap!4e0!5m1!1e0"
         })
     })
 
@@ -59,7 +65,7 @@ define(function () {
 
     map = new ol.Map({
         target: "map",
-        layers: [baseTileRoad, baseTileLabel, tempLayer],
+        layers: [googleTile, tempLayer],
         view: view,
         projection: projection
     })

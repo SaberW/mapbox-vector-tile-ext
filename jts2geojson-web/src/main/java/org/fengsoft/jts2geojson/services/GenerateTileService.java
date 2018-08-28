@@ -97,6 +97,8 @@ public class GenerateTileService {
             url = String.format(tileType.getUrl(), tx, ty, tz);
         } else if (tileType.getType().equals(TileType.TDTVEC.getType())) {
             url = String.format(tileType.getUrl(), tx, ty, tz);
+        } else if (tileType.getType().equals(TileType.GOOGLEIMAGE.getType())) {
+            url = String.format(tileType.getUrl(), gootleXY[0], gootleXY[1], tz);
         }
         if (!StringUtils.isEmpty(url))
             savePng(cacheDir, tx, ty, tz, url);

@@ -24,6 +24,6 @@ public class GenerateTileController {
     @RequestMapping(value = "tile")
     public void tile(String tileName, Double xmin, Double xmax, Double ymin, Double ymax) {
         Envelope envelope = new Envelope(xmin, xmax, ymin, ymax);
-        generateTileService.run(tileName, envelope, "EPSG:4326", TileType.BING);
+        generateTileService.run(tileName, envelope, "EPSG:4326", TileType.GOOGLEIMAGE);
     }
 }

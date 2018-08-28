@@ -24,12 +24,12 @@ public class TileCacheController {
     private GlobalMercator mercator;
 
 
-    @RequestMapping(value = "tile/{x}/{y}/{z}",
+    @RequestMapping(value = "tile/{tileName}/{x}/{y}/{z}",
             method = {RequestMethod.GET, RequestMethod.POST},
             produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<InputStreamResource> tile(@PathVariable("x") Integer x, @PathVariable("y") Integer y, @PathVariable("z") Integer z) {
+    public ResponseEntity<InputStreamResource> tile(@PathVariable("tileName") String tileName, @PathVariable("x") Integer x, @PathVariable("y") Integer y, @PathVariable("z") Integer z) {
 
-        String filePath = imageTilePath + File.separator + z + File.separator + String.format("%d-%d.%s", x, y, "png");
+        String filePath = imageTilePath + File.separator + tileName + File.separator + z + File.separator + String.format("%d-%d.%s", x, y, "png");
         if (!new File(filePath).exists()) {
             filePath = this.getClass().getResource("/static/img/nodata.png").getPath();
         }

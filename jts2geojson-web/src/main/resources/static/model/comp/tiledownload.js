@@ -1,17 +1,19 @@
 define(['map'], function (Map) {
     var map = Map.map, draw, projection = Map.projection, tempLayer = Map.tempLayer;
 
-    var tileLayer = new ol.layer.Tile({
-        source: new ol.source.XYZ({
-            projection: ol.proj.get("EPSG:3857"),
-            maxZoom: 23,
-            minZoom: 0,
-            url: contextPath + "/tilecache/tile/{x}/{-y}/{z}"
-        }),
-        projection: projection
-    })
+    function addDownloadLayer(tileName) {
+        var tileLayer = new ol.layer.Tile({
+            source: new ol.source.XYZ({
+                projection: ol.proj.get("EPSG:3857"),
+                maxZoom: 23,
+                minZoom: 0,
+                url: contextPath + "/tilecache/tile/" + tileName + "/{x}/{-y}/{z}"
+            }),
+            projection: projection
+        })
 
-    map.addLayer(tileLayer);
+        map.addLayer(tileLayer);
+    }
 
     function addInteraction() {
         if (draw) map.removeInteraction(draw)
@@ -21,7 +23,6 @@ define(['map'], function (Map) {
             geometryFunction: ol.interaction.Draw.createBox()
         });
         draw.on("drawend", function (re) {
-
             var ext = re.feature.getGeometry().getExtent()
             tempLayer.getSource().clear();
             var tileName = $("#tool-draw-tile-name").val();
@@ -39,6 +40,7 @@ define(['map'], function (Map) {
                 }).done(function (re) {
                     console.log(re)
                 });
+                addDownloadLayer(tileName)
             }
         })
         map.addInteraction(draw);
@@ -48,5 +50,11 @@ define(['map'], function (Map) {
         $("#tool-draw").on("click", function () {
             addInteraction();
         })
+
+        $("#tool-add").on("click", function () {
+            var tileName = $("#tool-draw-tile-name").val()
+            if (tileName)
+                addDownloadLayer(tileName)
+        });
     })
 })
