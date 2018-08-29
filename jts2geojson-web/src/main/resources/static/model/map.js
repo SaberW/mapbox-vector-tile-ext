@@ -65,7 +65,7 @@ define(function () {
 
     map = new ol.Map({
         target: "map",
-        layers: [googleTile, tempLayer],
+        layers: [baseTileRoad, baseTileLabel, tempLayer],
         view: view,
         projection: projection
     })

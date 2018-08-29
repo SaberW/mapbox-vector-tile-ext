@@ -7,7 +7,7 @@ define(['map'], function (Map) {
                 projection: ol.proj.get("EPSG:3857"),
                 maxZoom: 23,
                 minZoom: 0,
-                url: contextPath + "/tilecache/tile/" + tileName + "/{x}/{-y}/{z}"
+                url: contextPath + "/generate/tile/" + tileName + "/{x}/{-y}/{z}"
             }),
             projection: projection
         })
@@ -28,7 +28,7 @@ define(['map'], function (Map) {
             var tileName = $("#tool-draw-tile-name").val();
             if (tileName) {
                 $.ajax({
-                    url: contextPath + "/generate/tile",
+                    url: contextPath + "/generate/download",
                     data: {
                         tileName: tileName,
                         xmin: ext[0],

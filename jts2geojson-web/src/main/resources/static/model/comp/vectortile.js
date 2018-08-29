@@ -77,5 +77,5 @@ define(['map'], function (Map) {
         select.setActive(true);
     });
 
-    constructorSource(contextPath + '/vectortile/polygon2/{z}/{x}/{-y}.mvt?srsname=' + projection.getCode() + '&layerName=region_county');
+    constructorSource(contextPath + '/vt/polygon2/{z}/{x}/{-y}.mvt?srsname=' + projection.getCode() + '&layerName=region_county');
 })
