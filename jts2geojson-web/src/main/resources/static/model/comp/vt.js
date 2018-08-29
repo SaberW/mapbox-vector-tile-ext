@@ -1,5 +1,5 @@
 define(['map'], function (Map) {
-    var map = Map.map, projection = Map.projection,tempLayer = Map.tempLayer;
+    var map = Map.map, projection = Map.projection, tempLayer = Map.tempLayer;
 
     var gridsetName = 'EPSG:4326';
     var gridNames = ['EPSG:4326:0', 'EPSG:4326:1', 'EPSG:4326:2', 'EPSG:4326:3', 'EPSG:4326:4', 'EPSG:4326:5', 'EPSG:4326:6', 'EPSG:4326:7', 'EPSG:4326:8', 'EPSG:4326:9', 'EPSG:4326:10', 'EPSG:4326:11', 'EPSG:4326:12', 'EPSG:4326:13', 'EPSG:4326:14', 'EPSG:4326:15', 'EPSG:4326:16', 'EPSG:4326:17', 'EPSG:4326:18', 'EPSG:4326:19', 'EPSG:4326:20', 'EPSG:4326:21'];
@@ -65,6 +65,12 @@ define(['map'], function (Map) {
         tempLayer.getSource().clear(true);
         if (e.target.getFeatures().getLength() > 0) {
             var fea, targetFea = e.target.getFeatures().getArray()[0], newGeom;
+            var attrs = targetFea.getProperties();
+            var html = []
+            for (var key in attrs) {
+                html.push("<li>" + key + ":" + attrs[key] + "</li>")
+            }
+            $("#vt-info-container").html(html.join(""))
             var flatCoords = targetFea.getFlatCoordinates();
             var coords = [], coord = [];
             if (targetFea.getType() == "Point") {
