@@ -23,6 +23,9 @@ public class IndexController {
         } else if (code.equals("vectortile")) {
             modelAndView.addObject("content", "model/vectortile.html");
             modelAndView.addObject("js", "vectortile");
+        }else if (code.equals("vt")) {
+            modelAndView.addObject("content", "model/vt.html");
+            modelAndView.addObject("js", "vt");
         }
         return modelAndView;
     }
