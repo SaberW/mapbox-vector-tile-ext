@@ -29,7 +29,8 @@ public class GenerateTileService {
     private double ominy;
     private double omaxy;
     private int tminz = 1;
-    private int tmaxz = 20;
+    private int tmaxz = 18;
+    private int count = 0;
 
 
     public void run(String tileName, Envelope envelope, String epsg, TileType tileType) {
@@ -50,6 +51,7 @@ public class GenerateTileService {
         this.ominy = min[1];
 
         tminmax = new LinkedList<>();
+        count = 0;
         for (int tz = 0; tz < 32; tz++) {
             int[] tminxy = this.mercator.metersToTile(this.ominx, this.ominy, tz);
             int[] tmaxxy = this.mercator.metersToTile(this.omaxx, this.omaxy, tz);
@@ -83,7 +85,9 @@ public class GenerateTileService {
         }
     }
 
+
     private void generateTile(String cacheDir, int tx, int ty, int tz, TileType tileType) {
+        count++;
         String url = "";
         int[] gootleXY = mercator.googleTile(tx, ty, tz);
         if (tileType.getType().equals(TileType.BING.getType())) {
@@ -94,16 +98,15 @@ public class GenerateTileService {
         } else if (tileType.getType().equals(TileType.OSM.getType())) {
             url = String.format(tileType.getUrl(), tz, tx, ty);
         } else if (tileType.getType().equals(TileType.TDTCVR.getType())) {
-            url = String.format(tileType.getUrl(), tx, ty, tz);
+            url = String.format(tileType.getUrl(), gootleXY[0], gootleXY[1], tz);
         } else if (tileType.getType().equals(TileType.TDTVEC.getType())) {
-            url = String.format(tileType.getUrl(), tx, ty, tz);
+            url = String.format(tileType.getUrl(), gootleXY[0], gootleXY[1], tz);
         } else if (tileType.getType().equals(TileType.GOOGLEIMAGE.getType())) {
             url = String.format(tileType.getUrl(), gootleXY[0], gootleXY[1], tz);
         }
         if (!StringUtils.isEmpty(url))
             savePng(cacheDir, tx, ty, tz, url);
     }
-
 
     private void savePng(String cacheDir, int tx, int ty, int tz, String url) {
         Request request = new Request.Builder().url(url).build();

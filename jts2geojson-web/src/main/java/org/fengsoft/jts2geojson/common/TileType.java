@@ -9,8 +9,9 @@ public enum TileType {
     GOOGLEIMAGE("googleimage", "http://www.google.cn/maps/vt?lyrs=s@804&gl=cn&x=%d&y=%d&z=%d"),
     BING("bing", "https://dynamic.t0.tiles.ditu.live.com/comp/ch/%s?mkt=zh-CN&ur=cn&it=G,TW,BX,L&cstl=w4c"),
     OSM("osm", "https://c.tile.openstreetmap.org/%d/%d/%d.png"),
-    TDTCVR("tdtcvr", "http://t3.tianditu.gov.cn/DataServer?T=cva_w&x=%d&y=%d&l=%d"),
-    TDTVEC("tdtvec", "http://t3.tianditu.gov.cn/DataServer?T=vec_w&x=%d&y=%d&l=%d");
+    //http://t0.tianditu.gov.cn/DataServer?T=vec_w&x=3233&y=1775&l=12
+    TDTCVR("tdtcvr", "http://t6.tianditu.gov.cn/DataServer?T=cva_w&x=%d&y=%d&l=%d"),
+    TDTVEC("tdtvec", "http://t6.tianditu.gov.cn/DataServer?T=vec_w&x=%d&y=%d&l=%d");
 
     private String url;
     private String type;
