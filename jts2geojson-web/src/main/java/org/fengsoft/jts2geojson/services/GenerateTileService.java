@@ -1,6 +1,7 @@
 package org.fengsoft.jts2geojson.services;
 
 import cn.com.enersun.dgpmicro.common.GlobalMercator;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.fengsoft.jts2geojson.common.TileType;
 import org.locationtech.jts.geom.Envelope;
@@ -15,6 +16,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 
 @Service
+@Slf4j
 public class GenerateTileService {
     @Autowired
     private OkHttpClient okHttpClient;
@@ -69,20 +71,23 @@ public class GenerateTileService {
 
         int tz = tmaxz;
 
+        int count = 0;
         for (int ty = tmaxy; ty > tminy - 1; ty--) {
             for (int tx = tminx; tx < tmaxx + 1; tx++) {
                 generateTile(subDir.getAbsolutePath(), tx, ty, tz, tileType);
+                count++;
             }
         }
-
         for (tz = tmaxz - 1; tz > tminz - 1; tz--) {
             int[] tminxytmaxxy = tminmax.get(tz);
             for (int ty = tminxytmaxxy[3]; ty > tminxytmaxxy[1] - 1; ty--) {
                 for (int tx = tminxytmaxxy[0]; tx < tminxytmaxxy[2] + 1; tx++) {
                     generateTile(subDir.getAbsolutePath(), tx, ty, tz, tileType);
+                    count++;
                 }
             }
         }
+        log.info("=============totial count:" + count + "=============");
     }
 
 
@@ -98,9 +103,9 @@ public class GenerateTileService {
         } else if (tileType.getType().equals(TileType.OSM.getType())) {
             url = String.format(tileType.getUrl(), tz, tx, ty);
         } else if (tileType.getType().equals(TileType.TDTCVR.getType())) {
-            url = String.format(tileType.getUrl(), gootleXY[0], gootleXY[1], tz);
+            url = String.format(tileType.getUrl(), gootleXY[0] % 6, gootleXY[0], gootleXY[1], tz);
         } else if (tileType.getType().equals(TileType.TDTVEC.getType())) {
-            url = String.format(tileType.getUrl(), gootleXY[0], gootleXY[1], tz);
+            url = String.format(tileType.getUrl(), gootleXY[0] % 6, gootleXY[0], gootleXY[1], tz);
         } else if (tileType.getType().equals(TileType.GOOGLEIMAGE.getType())) {
             url = String.format(tileType.getUrl(), gootleXY[0], gootleXY[1], tz);
         }
@@ -114,7 +119,7 @@ public class GenerateTileService {
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-
+                log.info(String.format("error tile:%d-%d-%d", tx, ty, tz));
             }
 
             @Override
