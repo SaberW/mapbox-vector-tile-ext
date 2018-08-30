@@ -24,7 +24,7 @@ define(['map'], function (Map) {
         });
         draw.on("drawend", function (re) {
             var ext = re.feature.getGeometry().getExtent()
-            //ext = [97.4853057861328, 21.1021595001221, 106.240058898926, 29.2918682098389];
+            ext = [97.4853057861328, 21.1021595001221, 106.240058898926, 29.2918682098389];
             tempLayer.getSource().clear();
             var tileName = $("#tool-draw-tile-name").val();
             if (tileName) {

@@ -50,14 +50,14 @@ public class OKHttpConfig {
     public ConnectionPool pool() {
         return new ConnectionPool(200, 5, TimeUnit.MINUTES);
     }
-    @Bean
+    @Bean("okHttpClient")
     public OkHttpClient okHttpClient() {
         return new OkHttpClient.Builder()
                 .sslSocketFactory(sslSocketFactory(), x509TrustManager())
                 .retryOnConnectionFailure(false)//是否开启缓存
                 .connectionPool(pool())//连接池
-                .connectTimeout(10L, TimeUnit.SECONDS)
-                .readTimeout(10L, TimeUnit.SECONDS)
+                .connectTimeout(20L, TimeUnit.SECONDS)
+                .readTimeout(20L, TimeUnit.SECONDS)
                 .build();
     }
 }
