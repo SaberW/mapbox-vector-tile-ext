@@ -36,6 +36,8 @@ public class GenerateTileService {
     private String imageTilePath;
     @Value("${thread.size}")
     private Integer threadSize;
+    @Value("${thread.http.pool}")
+    private Integer httpPoolSize;
     @Autowired
     @Qualifier("sqlManagerFactoryBeanSqlite")
     private SQLManager sqlManager;
@@ -87,7 +89,7 @@ public class GenerateTileService {
      * The tuning parameters in this pool are subject to change in future OkHttp releases. Currently
      */
     public ConnectionPool pool() {
-        return new ConnectionPool(50, 5, TimeUnit.MINUTES);
+        return new ConnectionPool(httpPoolSize, 5, TimeUnit.MINUTES);
     }
 
     public OkHttpClient okHttpClient() {

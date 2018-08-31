@@ -60,6 +60,8 @@ cache:
   image-tile-path: E:\Data\tiles
 thread:
   size: 4
+  http:
+    pool: 20
 
 
 
