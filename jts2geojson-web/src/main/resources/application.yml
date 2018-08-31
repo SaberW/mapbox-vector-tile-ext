@@ -61,7 +61,8 @@ cache:
 thread:
   size: 4
   http:
-    pool: 20
+    maxIdleConnections: 20
+    keepAliveDuration: 5
 
 
 

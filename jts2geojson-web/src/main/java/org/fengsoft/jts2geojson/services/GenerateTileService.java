@@ -36,20 +36,22 @@ public class GenerateTileService {
     private String imageTilePath;
     @Value("${thread.size}")
     private Integer threadSize;
-    @Value("${thread.http.pool}")
-    private Integer httpPoolSize;
+    @Value("${thread.http.maxIdleConnections}")
+    private Integer maxIdleConnections;
+    @Value("${thread.http.keepAliveDuration}")
+    private Long keepAliveDuration;
     @Autowired
     @Qualifier("sqlManagerFactoryBeanSqlite")
     private SQLManager sqlManager;
 
 
-    public void run(String tileName, Envelope envelope, String epsg, TileType tileType,Boolean isOverwrite) {
+    public void run(String tileName, Envelope envelope, String epsg, TileType tileType, Boolean isOverwrite) {
         BlockingQueue<TileIndex> queue = new LinkedBlockingDeque<>(100);
         Producer p1 = new Producer(queue, envelope, 1, 18);
         ExecutorService service = Executors.newFixedThreadPool(threadSize);
         service.execute(p1);
         for (int i = 0; i < threadSize; i++) {
-            service.execute(new Consumer(queue, sqlManager, okHttpClient(), mercator, tileName, imageTilePath, tileType,isOverwrite));
+            service.execute(new Consumer(queue, sqlManager, okHttpClient(), mercator, tileName, imageTilePath, tileType, isOverwrite));
         }
     }
 
@@ -89,7 +91,7 @@ public class GenerateTileService {
      * The tuning parameters in this pool are subject to change in future OkHttp releases. Currently
      */
     public ConnectionPool pool() {
-        return new ConnectionPool(httpPoolSize, 5, TimeUnit.MINUTES);
+        return new ConnectionPool(maxIdleConnections, keepAliveDuration, TimeUnit.MINUTES);
     }
 
     public OkHttpClient okHttpClient() {
