@@ -4,12 +4,14 @@ import cn.com.enersun.dgpmicro.common.GlobalMercator;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
+import org.beetl.sql.core.SQLManager;
 import org.fengsoft.jts2geojson.common.TileIndex;
 import org.fengsoft.jts2geojson.common.TileType;
 import org.fengsoft.jts2geojson.multithread.Consumer;
 import org.fengsoft.jts2geojson.multithread.Producer;
 import org.locationtech.jts.geom.Envelope;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -32,14 +34,20 @@ public class GenerateTileService {
     private GlobalMercator mercator;
     @Value("${cache.image-tile-path}")
     private String imageTilePath;
+    @Value("${thread.size}")
+    private Integer threadSize;
+    @Autowired
+    @Qualifier("sqlManagerFactoryBeanSqlite")
+    private SQLManager sqlManager;
 
-    public void run(String tileName, Envelope envelope, String epsg, TileType tileType) {
-        BlockingQueue<TileIndex> queue = new LinkedBlockingDeque<>(1000);
+
+    public void run(String tileName, Envelope envelope, String epsg, TileType tileType,Boolean isOverwrite) {
+        BlockingQueue<TileIndex> queue = new LinkedBlockingDeque<>(100);
         Producer p1 = new Producer(queue, envelope, 1, 18);
-        ExecutorService service = Executors.newCachedThreadPool();
+        ExecutorService service = Executors.newFixedThreadPool(threadSize);
         service.execute(p1);
-        for (int i = 0; i < 10; i++) {
-            service.execute(new Consumer(queue, okHttpClient(), mercator, tileName, imageTilePath, tileType));
+        for (int i = 0; i < threadSize; i++) {
+            service.execute(new Consumer(queue, sqlManager, okHttpClient(), mercator, tileName, imageTilePath, tileType,isOverwrite));
         }
     }
 
@@ -48,15 +56,18 @@ public class GenerateTileService {
             @Override
             public void checkClientTrusted(X509Certificate[] x509Certificates, String s) {
             }
+
             @Override
             public void checkServerTrusted(X509Certificate[] x509Certificates, String s) {
             }
+
             @Override
             public X509Certificate[] getAcceptedIssuers() {
                 return new X509Certificate[0];
             }
         };
     }
+
     public SSLSocketFactory sslSocketFactory() {
         try {
             //信任任何链接
@@ -70,13 +81,15 @@ public class GenerateTileService {
         }
         return null;
     }
+
     /**
      * Create a new connection pool with tuning parameters appropriate for a single-user application.
      * The tuning parameters in this pool are subject to change in future OkHttp releases. Currently
      */
     public ConnectionPool pool() {
-        return new ConnectionPool(200, 5, TimeUnit.MINUTES);
+        return new ConnectionPool(50, 5, TimeUnit.MINUTES);
     }
+
     public OkHttpClient okHttpClient() {
         return new OkHttpClient.Builder()
                 .sslSocketFactory(sslSocketFactory(), x509TrustManager())

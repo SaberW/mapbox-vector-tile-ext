@@ -61,6 +61,7 @@ public class BeetlConfig {
         conf.setSqlManagerFactoryBeanName("sqlManagerFactoryBeanPG");
         return conf;
     }
+
     @Bean(name = "beetlSqlScannerConfigurerSqlite")
     public BeetlSqlScannerConfigurer getBeetlSqlScannerConfigurerSqlite(Environment env) {
         BeetlSqlScannerConfigurer conf = new BeetlSqlScannerConfigurer();

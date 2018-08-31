@@ -11,10 +11,9 @@ import java.util.List;
 
 public class BeetlGenerate2 {
     public static void main(String[] args) {
-
         ConnectionSource source = ConnectionSourceHelper.getSimple(
                 "org.sqlite.JDBC",
-                "jdbc:sqlite:C:\\Users\\Administrator\\Desktop\\empt.mbtiles", "", "");
+                "jdbc:sqlite:E:\\projects\\GIS\\mapbox-vector-tile-ext\\jts2geojson-web\\src\\main\\resources\\empt.mbtiles", "", "");
         DBStyle mysql = new SQLiteStyle();
         // sql语句放在classpagth的/sql 目录下
         SQLLoader loader = new ClasspathLoader("/sql");
@@ -24,10 +23,7 @@ public class BeetlGenerate2 {
         SQLManager sqlManager = new SQLManager(mysql, loader, source, nc, new Interceptor[]{new DebugInterceptor()});
 
         List<String> tabNames = new ArrayList<>();
-        tabNames.add("images");
-        tabNames.add("images_transparency");
-        tabNames.add("map");
-        tabNames.add("metadata");
+        tabNames.add("error_tile_info");
         for (String string : tabNames) {
             try {
                 sqlManager.genPojoCode(string, "");

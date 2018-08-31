@@ -19,6 +19,6 @@ public class Application implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        generateTileService.run("tianditu", new Envelope(97.4853057861328, 106.240058898926, 21.1021595001221, 29.2918682098389), "EPSG:4326", TileType.TDTVEC);
+        generateTileService.run("tianditu", new Envelope(97.4853057861328, 106.240058898926, 21.1021595001221, 29.2918682098389), "EPSG:4326", TileType.TDTVEC,false);
     }
 }

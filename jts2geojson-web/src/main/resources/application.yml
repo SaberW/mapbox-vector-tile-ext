@@ -20,7 +20,7 @@ spring:
         maximum-pool-size: 60
         minimum-idle: 0
     sqlite:
-      url: jdbc:sqlite:empt.mbtiles
+      url: jdbc:sqlite:${cache.image-tile-path}/empt.mbtiles
       username: postgres
       password: postgres
       driver-class-name: org.sqlite.JDBC
@@ -58,6 +58,8 @@ beetl:
 cache:
   vector-tile-path: E:\Data\vectorTile
   image-tile-path: E:\Data\tiles
+thread:
+  size: 4
 
 
 

@@ -36,7 +36,7 @@ public class GenerateTileController {
     @RequestMapping(value = "download")
     public void tile(String tileName, Double xmin, Double xmax, Double ymin, Double ymax) {
         Envelope envelope = new Envelope(xmin, xmax, ymin, ymax);
-        generateTileService.run(tileName, envelope, "EPSG:4326", TileType.TDTVEC);
+        generateTileService.run(tileName, envelope, "EPSG:4326", TileType.TDTVEC, false);
     }
 
     @RequestMapping(value = "tile/{tileName}/{x}/{y}/{z}",
