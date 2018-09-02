@@ -2,6 +2,7 @@ package org.fengsoft.jts2geojson.config;
 
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import javax.net.ssl.*;
@@ -13,6 +14,11 @@ import java.util.concurrent.TimeUnit;
 
 @Configuration
 public class OKHttpConfig {
+    @Value("${thread.http.maxIdleConnections}")
+    private Integer maxIdleConnections;
+    @Value("${thread.http.keepAliveDuration}")
+    private Long keepAliveDuration;
+
     @Bean
     public X509TrustManager x509TrustManager() {
         return new X509TrustManager() {
@@ -48,16 +54,18 @@ public class OKHttpConfig {
      */
     @Bean
     public ConnectionPool pool() {
-        return new ConnectionPool(200, 5, TimeUnit.MINUTES);
+        return new ConnectionPool(maxIdleConnections, keepAliveDuration, TimeUnit.MINUTES);
     }
     @Bean("okHttpClient")
     public OkHttpClient okHttpClient() {
-        return new OkHttpClient.Builder()
+        OkHttpClient client= new OkHttpClient.Builder()
                 .sslSocketFactory(sslSocketFactory(), x509TrustManager())
                 .retryOnConnectionFailure(false)//是否开启缓存
                 .connectionPool(pool())//连接池
                 .connectTimeout(20L, TimeUnit.SECONDS)
                 .readTimeout(20L, TimeUnit.SECONDS)
                 .build();
+        client.dispatcher().setMaxRequestsPerHost(100);
+        return client;
     }
 }

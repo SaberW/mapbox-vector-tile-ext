@@ -58,6 +58,8 @@ beetl:
 cache:
   vector-tile-path: E:\Data\vectorTile
   image-tile-path: E:\Data\tiles
+  maxz: 18
+  minz: 1
 thread:
   size: 4
   http:
