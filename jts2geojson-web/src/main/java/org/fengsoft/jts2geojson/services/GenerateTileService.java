@@ -97,7 +97,7 @@ public class GenerateTileService {
     public OkHttpClient okHttpClient() {
         return new OkHttpClient.Builder()
                 .sslSocketFactory(sslSocketFactory(), x509TrustManager())
-                .retryOnConnectionFailure(false)//是否开启缓存
+                .retryOnConnectionFailure(true)//是否开启缓存
                 .connectionPool(pool())//连接池
                 .connectTimeout(20L, TimeUnit.SECONDS)
                 .readTimeout(20L, TimeUnit.SECONDS)

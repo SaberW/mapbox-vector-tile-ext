@@ -68,7 +68,7 @@ define(function () {
         layers:
             [
                 // baseTileRoad, baseTileLabel,
-                googleTile,
+                //googleTile,
                 tempLayer
             ],
         view: view,

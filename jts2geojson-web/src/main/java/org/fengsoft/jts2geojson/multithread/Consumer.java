@@ -96,14 +96,14 @@ public class Consumer implements Runnable {
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                DSTransactionManager.start();
-                sqlManager.insert(ErrorTileInfo.class, new ErrorTileInfo(tx, ty, tz));
-                try {
-                    DSTransactionManager.commit();
-                } catch (SQLException e1) {
-                    e1.printStackTrace();
-                }
-                log.info(String.format("error tile:%d-%d-%d", tx, ty, tz));
+//                DSTransactionManager.start();
+//                sqlManager.insert(ErrorTileInfo.class, new ErrorTileInfo(tx, ty, tz));
+//                try {
+//                    DSTransactionManager.commit();
+//                } catch (SQLException e1) {
+//                    e1.printStackTrace();
+//                }
+                log.info(String.format("error tile:%d-%d-%d：%s", tx, ty, tz,e.getMessage()));
             }
 
             @Override
