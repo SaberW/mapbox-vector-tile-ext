@@ -15,9 +15,6 @@ import org.springframework.stereotype.Service;
 import javax.imageio.stream.FileImageOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.Date;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -170,14 +167,20 @@ public class GenerateTileService {
 
                     if (isOverwrite || !targetCVR.exists()) {
                         generateTile(TileType.TDTCVR, tileIndex, targetCVR);
+                    } else {
+                        countVCRsuccess.getAndIncrement();
                     }
                     if (isOverwrite || !targetVEC.exists()) {
                         generateTile(TileType.TDTVEC, tileIndex, targetVEC);
+                    } else {
+                        countVECsuccess.getAndIncrement();
                     }
                 } else {
                     File target = new File(new File(imageTilePath, tileName + File.separator + tileIndex.getZ() + File.separator + tileIndex.getX()), String.format("%d.%s", tileIndex.getY(), "png"));
                     if (isOverwrite || !target.exists()) {
                         generateTile(tileType, tileIndex, target);
+                    } else {
+                        countVCRsuccess.getAndIncrement();
                     }
                 }
             }
