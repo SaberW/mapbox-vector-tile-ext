@@ -57,13 +57,13 @@ beetl:
 # 存放缓存文件的地址
 cache:
   vector-tile-path: E:\Data\vectorTile
-  image-tile-path: E:\Data\tiles
+  image-tile-path: G:\TDT
   maxz: 18
   minz: 1
 thread:
-  size: 4
+  size: 3
   http:
-    maxIdleConnections: 20
+    maxIdleConnections: 40
     keepAliveDuration: 5
 
 
