@@ -30,15 +30,20 @@ public class Application implements CommandLineRunner {
         ((Runnable) () -> new Timer().scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                log.info(String.format(" VCR(%d-%d-%d)--------VEC(%d-%d-%d)--------done %d",
-                        generateTileService.getTotalCount(TileType.TDT) / 2, generateTileService.getCountVCRsuccess().longValue(), generateTileService.getCountVCRerror().longValue(),
-                        generateTileService.getTotalCount(TileType.TDT) / 2, generateTileService.getCountVECsuccess().longValue(), generateTileService.getCountVECerror().longValue()),
-                        generateTileService.getTotalCount(TileType.TDT) - (
-                                generateTileService.getCountVCRsuccess().longValue() +
-                                        generateTileService.getCountVCRerror().longValue() +
-                                        generateTileService.getCountVECsuccess().longValue() +
-                                        generateTileService.getCountVECerror().longValue())
-                );
+                long total = generateTileService.getTotalCount(TileType.TDT);
+                long vcrSuccess = generateTileService.getCountVCRsuccess().longValue();
+                long vcrError = generateTileService.getCountVCRerror().longValue();
+                long vecSuccess = generateTileService.getCountVECsuccess().longValue();
+                long vecError = generateTileService.getCountVECerror().longValue();
+                log.info(String.format(" VCR（%d-%d-%d）--------VEC（%d-%d-%d）--------done %d",
+                        total / 2,
+                        vcrSuccess,
+                        vcrError,
+                        total / 2,
+                        vecSuccess,
+                        vecError,
+                        (vcrSuccess + vcrError + vecSuccess + vecError)
+                ));
             }
         }, new Date(), 5000)).run();
     }
