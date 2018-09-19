@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 @Controller
 public class IndexController {
     @RequestMapping(value = "index")
-    public ModelAndView index(HttpServletRequest request, @RequestParam(value = "code", defaultValue = "vectortile") String code) {
+    public ModelAndView index(HttpServletRequest request, @RequestParam(value = "code", defaultValue = "tiledownload") String code) {
         ModelAndView modelAndView = new ModelAndView();
         modelAndView.setViewName("index");
         if (code.equals("tiledownload")) {

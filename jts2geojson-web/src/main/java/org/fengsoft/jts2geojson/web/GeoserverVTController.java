@@ -60,7 +60,7 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping(value = "geoserver")
 public class GeoserverVTController {
-    @Value("${cache.vector-tile-path}")
+    @Value("${cache.vector-tile-geoserver-path}")
     public String cachePath;
 
     private GlobalGeodetic globalGeodetic = new GlobalGeodetic("", 256);
@@ -93,7 +93,7 @@ public class GeoserverVTController {
 
         File file = new File(cachePath + File.separator + layerName, String.format("%d-%d-%d", z, x, y) + ".mvt");
         if (!file.exists()) {
-            double[] bboxs = calBbox(x, y, z);
+            double[] bboxs = globalGeodetic.tileLatLonBounds(x, y, z);
             String sql = "SELECT t.* FROM " + layerName + " t  WHERE ST_Intersects (shape,ST_MakeEnvelope(" + bboxs[1] + "," + bboxs[0] + "," + bboxs[3] + "," + bboxs[2] + ",4326))";
 
             List<RegionCounty> regionCountyList = sqlManager.execute(new SQLReady(sql), RegionCounty.class);
@@ -152,11 +152,7 @@ public class GeoserverVTController {
                 e.printStackTrace();
             }
         }
-        return "forward:/vt/download/" + layerName + "/" + file.getName();
-    }
-
-    public double[] calBbox(int x, int y, int z) {
-        return globalGeodetic.tileLatLonBounds(x, y, z);
+        return "forward:/geoserver/download/" + layerName + "/" + file.getName();
     }
 
     @RequestMapping(

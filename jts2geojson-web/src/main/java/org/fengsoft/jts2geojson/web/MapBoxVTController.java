@@ -1,9 +1,13 @@
 package org.fengsoft.jts2geojson.web;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import cn.com.enersun.dgpmicro.common.GlobalGeodetic;
+import cn.com.enersun.dgpmicro.services.VectorTileServicesImpl;
+import org.beetl.sql.core.SQLManager;
+import org.beetl.sql.core.SQLReady;
 import org.fengsoft.jts2geojson.common.AnotherException;
-import org.fengsoft.jts2geojson.services.RegionCountyServices;
+import org.fengsoft.jts2geojson.entity.RegionCounty;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamResource;
@@ -11,47 +15,41 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
 
 @Controller
 @RequestMapping(value = "mapbox")
-public class MapBoxVTController {
+public class MapBoxVTController extends VectorTileServicesImpl<RegionCounty, Integer> {
     @Autowired
-    private RegionCountyServices regionCountyServices;
+    @Qualifier("sqlManagerFactoryBeanPG")
+    private SQLManager sqlManager;
 
-    @Value("${cache.vector-tile-path}")
+    @Value("${cache.vector-tile-mapbox-path}")
     public String cachePath;
 
-
-    @RequestMapping("polygon")
-    @ResponseBody
-    public String getLine(String srsname, String bbox) {
-        try {
-            return regionCountyServices.allFeatures(srsname, bbox);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            return "";
-        }
-    }
+    private GlobalGeodetic globalGeodetic = new GlobalGeodetic("", 256);
 
 
     /**
-     *  进来的是XYZ scheme
-     * @param srsname
+     * 进来的是XYZ scheme
+     *
      * @param layerName
      * @param x
      * @param y
      * @param z
      * @return
      */
-    @RequestMapping(value = "polygon2/{z}/{x}/{y}.mvt",
+    @RequestMapping(value = "vt/{z}/{x}/{y}.mvt",
             method = {RequestMethod.POST, RequestMethod.GET},
             produces = MediaType.APPLICATION_OCTET_STREAM_VALUE
     )
     @ExceptionHandler(AnotherException.class)
-    public String getLine2(@RequestParam("srsname") String srsname,
-                           @RequestParam("layerName") String layerName,
+    public String getLine2(@RequestParam("layerName") String layerName,
                            @PathVariable("x") Integer x,
                            @PathVariable("y") Integer y,
                            @PathVariable("z") Integer z) {
@@ -63,9 +61,21 @@ public class MapBoxVTController {
 
         File file = new File(cachePath + File.separator + layerName, String.format("%d-%d-%d", z, x, y) + ".mvt");
         if (!file.exists()) {
-            regionCountyServices.listFeature(srsname, layerName, x, y, z);
+            //计算范围
+            double[] bboxs = globalGeodetic.tileLatLonBounds(x, y, z);
+            String sql = "SELECT t.id,t.name,t.shape FROM " + layerName + " t  WHERE ST_Intersects (shape,ST_MakeEnvelope(" + bboxs[1] + "," + bboxs[0] + "," + bboxs[3] + "," + bboxs[2] + ",4326))";
+            SQLReady sqlReady = new SQLReady(sql);
+            List<RegionCounty> res = sqlManager.execute(sqlReady, RegionCounty.class);
+            try {
+                if (res.size() > 0) {
+                    byte[] content = toMapBoxMvt(res, bboxs, layerName, x, y, z);
+                    Files.write(Paths.get(cachePath, layerName, String.format("%d-%d-%d", z, x, y) + ".mvt"), content);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-        return "forward:/vt/download/" + layerName + "/" + file.getName();
+        return "forward:/mapbox/download/" + layerName + "/" + file.getName();
     }
 
     @RequestMapping(
@@ -80,9 +90,12 @@ public class MapBoxVTController {
             throws IOException {
 
         String filePath = cachePath + File.separator + layerName + File.separator + fileName;
-        FileSystemResource file = new FileSystemResource(filePath);
-        return ResponseEntity.ok().contentLength(file.contentLength())
-                .contentType(MediaType.parseMediaType(MediaType.APPLICATION_OCTET_STREAM_VALUE))
-                .body(new InputStreamResource(file.getInputStream()));
+        if (new File(filePath).exists()) {
+            FileSystemResource file = new FileSystemResource(filePath);
+            return ResponseEntity.ok().contentLength(file.contentLength())
+                    .contentType(MediaType.parseMediaType(MediaType.APPLICATION_OCTET_STREAM_VALUE))
+                    .body(new InputStreamResource(file.getInputStream()));
+        } else return ResponseEntity.noContent().build();
+
     }
 }

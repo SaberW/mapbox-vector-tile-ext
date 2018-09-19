@@ -56,7 +56,8 @@ beetl:
 
 # 存放缓存文件的地址
 cache:
-  vector-tile-path: E:\Data\vectorTile
+  vector-tile-geoserver-path: E:\Data\tiles\vt-geoserver
+  vector-tile-mapbox-path: E:\Data\tiles\vt-mapbox
   image-tile-path: G:\TDT
   maxz: 18
   minz: 1
