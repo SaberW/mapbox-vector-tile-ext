@@ -20,9 +20,12 @@ public class IndexController {
         if (code.equals("tiledownload")) {
             modelAndView.addObject("content", "model/tiledownload.html");
             modelAndView.addObject("js", "tiledownload");
-        } else if (code.equals("vectortile")) {
-            modelAndView.addObject("content", "model/vectortile.html");
-            modelAndView.addObject("js", "vectortile");
+        } else if (code.equals("mapboxvt")) {
+            modelAndView.addObject("content", "model/mapboxvt.html");
+            modelAndView.addObject("js", "mapboxvt");
+        }else if (code.equals("geoservervt")) {
+            modelAndView.addObject("content", "model/geoservervt.html");
+            modelAndView.addObject("js", "geoservervt");
         }else if (code.equals("vt")) {
             modelAndView.addObject("content", "model/vt.html");
             modelAndView.addObject("js", "vt");

@@ -15,8 +15,8 @@ import java.io.File;
 import java.io.IOException;
 
 @Controller
-@RequestMapping(value = "vt")
-public class VectorTileController {
+@RequestMapping(value = "mapbox")
+public class MapBoxVTController {
     @Autowired
     private RegionCountyServices regionCountyServices;
 

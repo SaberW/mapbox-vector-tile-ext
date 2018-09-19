@@ -11,7 +11,6 @@
     <name>jts2geojson-web</name>
     <description>Demo project for Spring Boot</description>
     <properties>
-
         <github.global.server>github</github.global.server>
     </properties>
 
@@ -25,13 +24,19 @@
         <dependency>
             <groupId>cn.com.enersun.dgpmicro</groupId>
             <artifactId>common-geojson</artifactId>
-            <version>1.0.1-RELEASE</version>
+            <version>1.0.5-RELEASE</version>
         </dependency>
 
         <dependency>
             <groupId>cn.com.enersun.dgpmicro</groupId>
-            <artifactId>common-vectortile</artifactId>
-            <version>1.0.3-RELEASE</version>
+            <artifactId>common-gs-vectortile</artifactId>
+            <version>1.0-RELEASE</version>
+        </dependency>
+
+        <dependency>
+            <groupId>cn.com.enersun.dgpmicro</groupId>
+            <artifactId>common-mb-vectortile</artifactId>
+            <version>1.0.4-RELEASE</version>
         </dependency>
 
         <dependency>
