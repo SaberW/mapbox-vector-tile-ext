@@ -69,18 +69,6 @@ define(function () {
             [
                 baseTileRoad, baseTileLabel,
                 //googleTile,
-                new ol.layer.Tile({
-                    source: new ol.source.TileDebug({
-                        projection: 'EPSG:3857',
-                        tileGrid: baseTileRoad.getSource().getTileGrid()
-                    }),
-                    style: new ol.style.Style({
-                        stroke: new ol.style.Stroke({
-                            color: "#ff0000",
-                            width: 1
-                        })
-                    })
-                }),
                 tempLayer
             ],
         view: view,

@@ -1,9 +1,9 @@
 package org.fengsoft.jts2geojson.web;
 
-import cn.com.enersun.dgpmicro.common.GlobalGeodetic;
 import org.beetl.sql.core.SQLManager;
 import org.beetl.sql.core.SQLReady;
-import org.fengsoft.jts2geojson.entity.RegionCounty;
+import org.fengsoft.geojson.common.GlobalGeodetic;
+import org.fengsoft.geojson.entity.RegionCounty;
 import org.geoserver.wms.GetMapOutputFormat;
 import org.geoserver.wms.WMSMapContent;
 import org.geoserver.wms.mapbox.MapBoxTileBuilderFactory;
@@ -44,7 +44,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.ReflectionUtils;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -88,8 +91,8 @@ public class GeoserverVTController {
         File parentFile = new File(cachePath + File.separator + layerName);
         if (!parentFile.exists()) parentFile.mkdir();
 
-        //y = (int) Math.pow(2, z) - 1 - y;// TMS转XYZ
-        //y = (1 << z) - y - 1;            //将XYZ 转为 TMS
+        //y = (int) Math.pow(2, z) - 1 - y;//TMS转XYZ
+        //y = (1 << z) - y - 1;//将XYZ 转为 TMS
 
         File file = new File(cachePath + File.separator + layerName, String.format("%d-%d-%d", z, x, y) + ".mvt");
         if (!file.exists()) {

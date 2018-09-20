@@ -1,12 +1,12 @@
 define(['map'], function (Map) {
-    var map = Map.map, projection = Map.projection, select, tempLayer = Map.tempLayer, vectorTileLayer;
-    var vectorTileSource;
+    var map = Map.map, projection = Map.projection, select, tempLayer = Map.tempLayer, vectorTileLayer, vectorTileGrid;
 
-    function constructorSource(url) {
-        if (vectorTileLayer) map.removeLayer(vectorTileLayer)
-        vectorTileSource = new ol.source.VectorTile({
+    vectorTileLayer = new ol.layer.VectorTile({
+        renderMode: "image",
+        preload: 12,
+        source: new ol.source.VectorTile({
             format: new ol.format.MVT(),
-            url: url,
+            url: contextPath + '/geoserver/vt/{z}/{x}/{-y}.mvt?layerName=region_county',
             projection: projection,
             extent: ol.proj.get("EPSG:4326").getExtent(),
             tileSize: 256,
@@ -14,16 +14,24 @@ define(['map'], function (Map) {
             minZoom: 0,
             wrapX: true
         })
+    })
 
-        vectorTileLayer = new ol.layer.VectorTile({
-            renderMode: "image",
-            preload: 12,
-            source: vectorTileSource
+    map.addLayer(vectorTileLayer);
+
+    vectorTileGrid = new ol.layer.Tile({
+        source: new ol.source.TileDebug({
+            projection: 'EPSG:3857',
+            tileGrid: vectorTileLayer.getSource().getTileGrid()
+        }),
+        style: new ol.style.Style({
+            stroke: new ol.style.Stroke({
+                color: "#ff0000",
+                width: 1
+            })
         })
+    })
 
-        map.addLayer(vectorTileLayer);
-    }
-
+    map.addLayer(vectorTileGrid)
 
     select = new ol.interaction.Select();
     select.on("select", function (e) {
@@ -76,6 +84,4 @@ define(['map'], function (Map) {
     map.on('moveend', function (evt) {
         select.setActive(true);
     });
-
-    constructorSource(contextPath + '/geoserver/vt/{z}/{x}/{-y}.mvt?layerName=region_county');
 })
