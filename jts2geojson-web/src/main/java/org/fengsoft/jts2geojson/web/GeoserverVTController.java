@@ -3,6 +3,7 @@ package org.fengsoft.jts2geojson.web;
 import org.beetl.sql.core.SQLManager;
 import org.beetl.sql.core.SQLReady;
 import org.fengsoft.geojson.common.GlobalGeodetic;
+import org.fengsoft.geojson.common.GlobalMercator;
 import org.fengsoft.geojson.entity.RegionCounty;
 import org.geoserver.wms.GetMapOutputFormat;
 import org.geoserver.wms.WMSMapContent;
@@ -67,10 +68,12 @@ public class GeoserverVTController {
     public String cachePath;
 
     private GlobalGeodetic globalGeodetic = new GlobalGeodetic("", 256);
+    private GlobalMercator globalMercator = new GlobalMercator(256);
 
     @Autowired
     @Qualifier("sqlManagerFactoryBeanPG")
     private SQLManager sqlManager;
+
     /**
      * 进来的是XYZ scheme
      *
@@ -92,7 +95,7 @@ public class GeoserverVTController {
         if (!parentFile.exists()) parentFile.mkdir();
 
         //y = (int) Math.pow(2, z) - 1 - y;//TMS转XYZ
-        //y = (1 << z) - y - 1;//将XYZ 转为 TMS
+//        y = (1 << z) - y - 1;//将XYZ 转为 TMS
 
         File file = new File(cachePath + File.separator + layerName, String.format("%d-%d-%d", z, x, y) + ".mvt");
         if (!file.exists()) {

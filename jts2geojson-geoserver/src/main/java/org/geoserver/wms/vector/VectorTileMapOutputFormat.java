@@ -14,16 +14,17 @@ import org.geotools.feature.FeatureIterator;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.Layer;
 import org.geotools.util.logging.Logging;
-import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.Polygon;
 import org.opengis.feature.*;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import java.awt.*;
 import java.io.IOException;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -55,6 +56,8 @@ public class VectorTileMapOutputFormat extends AbstractMapOutputFormat {
         VectorTileBuilder vectorTileBuilder;
         vectorTileBuilder = this.tileBuilderFactory.newBuilder(paintArea, renderingArea);
 
+        double res = renderingArea.getWidth() * 3600.0 / 256.0;
+
         for (Layer layer : layers) {
             int buffer = mapContent.getBuffer();
             Pipeline pipeline = null;
@@ -65,7 +68,7 @@ public class VectorTileMapOutputFormat extends AbstractMapOutputFormat {
             }
             FeatureCollection<?, ?> features = layer.getFeatureSource().getFeatures();
 
-            run(features, pipeline, vectorTileBuilder, layer);
+            run(features, pipeline, vectorTileBuilder, layer, res, renderingArea);
         }
 
         return vectorTileBuilder.build();
@@ -103,7 +106,7 @@ public class VectorTileMapOutputFormat extends AbstractMapOutputFormat {
         return props;
     }
 
-    void run(FeatureCollection<?, ?> features, Pipeline pipeline, VectorTileBuilder vectorTileBuilder, Layer layer) {
+    void run(FeatureCollection<?, ?> features, Pipeline pipeline, VectorTileBuilder vectorTileBuilder, Layer layer, double res, ReferencedEnvelope renderingArea) {
         Stopwatch sw = Stopwatch.createStarted();
         int count = 0;
         int total = 0;
@@ -115,10 +118,23 @@ public class VectorTileMapOutputFormat extends AbstractMapOutputFormat {
                 total++;
                 Geometry originalGeom;
                 Geometry finalGeom;
-
                 originalGeom = (Geometry) feature.getDefaultGeometryProperty().getValue();
                 try {
-                    finalGeom = pipeline.execute(originalGeom);
+                    if (originalGeom.getGeometryType().equalsIgnoreCase("Point"))
+                        finalGeom = originalGeom.getFactory().createPoint(coordinateToScreeen(originalGeom.getCoordinate(), renderingArea, res));
+                    else if (originalGeom.getGeometryType().equalsIgnoreCase("Polygon")) {
+                        Polygon polygon = (Polygon) originalGeom;
+                        Coordinate[] exterioRingArrs = Arrays.stream(polygon.getExteriorRing().getCoordinates()).map(coordinate -> coordinateToScreeen(coordinate, renderingArea, res)).toArray(Coordinate[]::new);
+                        List<Coordinate[]> coordinates = new ArrayList<>();
+                        for (int i = 0; i < polygon.getNumInteriorRing(); i++) {
+                            Coordinate[] interioRingArrs = Arrays.stream(polygon.getInteriorRingN(i).getCoordinates()).map(coordinate -> coordinateToScreeen(coordinate, renderingArea, res)).toArray(Coordinate[]::new);
+                            coordinates.add(interioRingArrs);
+                        }
+                        finalGeom = originalGeom.getFactory().createPolygon(originalGeom.getFactory().createLinearRing(exterioRingArrs), coordinates.stream().map(coords -> originalGeom.getFactory().createLinearRing(coords)).toArray(LinearRing[]::new));
+                    } else
+                        finalGeom = pipeline.execute(originalGeom);
+//                    公式：X = (lon - minLon)*3600/scaleX；
+//                    公式：Y = (maxLat - lat)*3600/scaleY；
                 } catch (Exception processingException) {
                     processingException.printStackTrace();
                     continue;
@@ -142,6 +158,10 @@ public class VectorTileMapOutputFormat extends AbstractMapOutputFormat {
             String msg = String.format("Added %,d out of %,d features of '%s' in %s", count, total, layer.getTitle(), sw);
             LOGGER.fine(msg);
         }
+    }
+
+    private Coordinate coordinateToScreeen(Coordinate coordinate, ReferencedEnvelope renderingArea, double res) {
+        return new Coordinate((coordinate.getX() - renderingArea.getMinX()) * 3600.0 / res, (renderingArea.getMaxY() - coordinate.getY()) * 3600.0 / res, 0);
     }
 
     /**

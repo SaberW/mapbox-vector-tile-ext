@@ -63,6 +63,10 @@ define(function () {
         }
     })
 
+    tempLayer.getSource().addFeature(new ol.Feature({
+        geometry: new ol.geom.Point([100.984121072754, 22.307609703125])
+    }))
+
     map = new ol.Map({
         target: "map",
         layers:

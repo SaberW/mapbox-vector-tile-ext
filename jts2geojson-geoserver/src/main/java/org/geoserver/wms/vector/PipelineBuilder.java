@@ -48,9 +48,7 @@ class PipelineBuilder {
 
         MathTransform sourceToScreen;
 
-        ReferencedEnvelope
-                renderingArea; // WMS request; bounding box - in final map (target) CRS (BBOX from
-        // WMS)
+        ReferencedEnvelope renderingArea; // WMS request; bounding box - in final map (target) CRS (BBOX from WMS)
 
         Rectangle paintArea; // WMS request; rectangle of the image (width and height from WMS)
 
@@ -110,8 +108,7 @@ class PipelineBuilder {
         CoordinateReferenceSystem mapCrs = context.renderingArea.getCoordinateReferenceSystem();
         context.sourceToTargetCrs = buildTransform(sourceCrs, mapCrs);
         context.targetToScreen = ProjectiveTransform.create(context.worldToScreen);
-        context.sourceToScreen =
-                ConcatenatedTransform.create(context.sourceToTargetCrs, context.targetToScreen);
+        context.sourceToScreen = ConcatenatedTransform.create(context.sourceToTargetCrs, context.targetToScreen);
 
         double[] spans_sourceCRS;
         double[] spans_targetCRS;
@@ -120,29 +117,23 @@ class PipelineBuilder {
 
             // 0.8px is used to make sure the generalization isn't too much (doesn't make visible
             // changes)
-            spans_sourceCRS =
-                    Decimator.computeGeneralizationDistances(screenToWorld, context.paintArea, 0.8);
+            spans_sourceCRS = Decimator.computeGeneralizationDistances(screenToWorld, context.paintArea, 0.8);
 
-            spans_targetCRS =
-                    Decimator.computeGeneralizationDistances(
-                            context.targetToScreen.inverse(), context.paintArea, 1.0);
+            spans_targetCRS = Decimator.computeGeneralizationDistances(context.targetToScreen.inverse(), context.paintArea, 1.0);
             // this is used for clipping the data to A pixels around request BBOX, so we want this
             // to be the larger of the two spans
             // so we are getting at least A pixels around.
             context.pixelSizeInTargetCRS = Math.max(spans_targetCRS[0], spans_targetCRS[1]);
-
         } catch (TransformException e) {
             throw Throwables.propagate(e);
         }
 
         context.screenSimplificationDistance = PIXEL_BASE_SAMPLE_SIZE / overSampleFactor;
         // use min so generalize "less" (if pixel is different size in X and Y)
-        context.targetCRSSimplificationDistance =
-                Math.min(spans_targetCRS[0], spans_targetCRS[1]) / overSampleFactor;
+        context.targetCRSSimplificationDistance = Math.min(spans_targetCRS[0], spans_targetCRS[1]) / overSampleFactor;
 
         context.screenMap = new ScreenMap(0, 0, paintArea.width, paintArea.height);
-        context.screenMap.setSpans(
-                spans_sourceCRS[0] / overSampleFactor, spans_sourceCRS[1] / overSampleFactor);
+        context.screenMap.setSpans(spans_sourceCRS[0] / overSampleFactor, spans_sourceCRS[1] / overSampleFactor);
         context.screenMap.setTransform(context.sourceToScreen);
 
         return context;
