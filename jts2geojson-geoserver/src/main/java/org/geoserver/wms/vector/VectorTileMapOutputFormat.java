@@ -122,16 +122,32 @@ public class VectorTileMapOutputFormat extends AbstractMapOutputFormat {
                 try {
                     if (originalGeom.getGeometryType().equalsIgnoreCase("Point"))
                         finalGeom = originalGeom.getFactory().createPoint(coordinateToScreeen(originalGeom.getCoordinate(), renderingArea, res));
-                    else if (originalGeom.getGeometryType().equalsIgnoreCase("Polygon")) {
-                        Polygon polygon = (Polygon) originalGeom;
-                        Coordinate[] exterioRingArrs = Arrays.stream(polygon.getExteriorRing().getCoordinates()).map(coordinate -> coordinateToScreeen(coordinate, renderingArea, res)).toArray(Coordinate[]::new);
-                        List<Coordinate[]> coordinates = new ArrayList<>();
-                        for (int i = 0; i < polygon.getNumInteriorRing(); i++) {
-                            Coordinate[] interioRingArrs = Arrays.stream(polygon.getInteriorRingN(i).getCoordinates()).map(coordinate -> coordinateToScreeen(coordinate, renderingArea, res)).toArray(Coordinate[]::new);
-                            coordinates.add(interioRingArrs);
+                    else if (originalGeom.getGeometryType().equalsIgnoreCase("MultiPoint")) {
+                        MultiPoint multiPoint = (MultiPoint) originalGeom;
+                        Point[] points = new Point[multiPoint.getNumGeometries()];
+                        for (int i = 0; i < multiPoint.getNumGeometries(); i++) {
+                            points[i] = originalGeom.getFactory().createPoint(coordinateToScreeen(multiPoint.getGeometryN(i).getCoordinate(), renderingArea, res));
                         }
-                        finalGeom = originalGeom.getFactory().createPolygon(originalGeom.getFactory().createLinearRing(exterioRingArrs), coordinates.stream().map(coords -> originalGeom.getFactory().createLinearRing(coords)).toArray(LinearRing[]::new));
-                    } else
+                        finalGeom = originalGeom.getFactory().createMultiPoint(points);
+                    } else if (originalGeom.getGeometryType().equalsIgnoreCase("LineString")) {
+                        finalGeom = lineStringToScreen((LineString) originalGeom,renderingArea,res);
+                    } else if (originalGeom.getGeometryType().equalsIgnoreCase("MultiLineString")) {
+                        MultiLineString multiLineString = (MultiLineString) originalGeom;
+                        LineString[] lineStrings = new LineString[multiLineString.getNumGeometries()];
+                        for (int i = 0; i < multiLineString.getNumGeometries(); i++) {
+                            lineStrings[i] = lineStringToScreen((LineString) multiLineString.getGeometryN(i),renderingArea,res);
+                        }
+                        finalGeom = originalGeom.getFactory().createMultiLineString(lineStrings);
+                    } else if (originalGeom.getGeometryType().equalsIgnoreCase("Polygon")) {
+                        finalGeom = polygonToScreen((Polygon) originalGeom, renderingArea, res);
+                    } else if(originalGeom.getGeometryType().equalsIgnoreCase("MultiPolygon")){
+                        MultiPolygon multiPolygon = (MultiPolygon) originalGeom;
+                        Polygon[] polygons = new Polygon[multiPolygon.getNumGeometries()];
+                        for (int i = 0; i < multiPolygon.getNumGeometries(); i++) {
+                            polygons[i] = polygonToScreen((Polygon) multiPolygon.getGeometryN(i), renderingArea, res);
+                        }
+                        finalGeom = originalGeom.getFactory().createMultiPolygon(polygons);
+                    }else
                         finalGeom = pipeline.execute(originalGeom);
 //                    公式：X = (lon - minLon)*3600/scaleX；
 //                    公式：Y = (maxLat - lat)*3600/scaleY；
@@ -158,6 +174,21 @@ public class VectorTileMapOutputFormat extends AbstractMapOutputFormat {
             String msg = String.format("Added %,d out of %,d features of '%s' in %s", count, total, layer.getTitle(), sw);
             LOGGER.fine(msg);
         }
+    }
+
+    private LineString lineStringToScreen(LineString originalGeom, ReferencedEnvelope renderingArea, double res) {
+        Coordinate[] exterioRingArrs = Arrays.stream(originalGeom.getCoordinates()).map(coordinate -> coordinateToScreeen(coordinate, renderingArea, res)).toArray(Coordinate[]::new);
+        return originalGeom.getFactory().createLineString(exterioRingArrs);
+    }
+
+    private Polygon polygonToScreen(Polygon originalGeom, ReferencedEnvelope renderingArea, double res) {
+        Coordinate[] exterioRingArrs = Arrays.stream(originalGeom.getExteriorRing().getCoordinates()).map(coordinate -> coordinateToScreeen(coordinate, renderingArea, res)).toArray(Coordinate[]::new);
+        List<Coordinate[]> coordinates = new ArrayList<>();
+        for (int i = 0; i < originalGeom.getNumInteriorRing(); i++) {
+            Coordinate[] interioRingArrs = Arrays.stream(originalGeom.getInteriorRingN(i).getCoordinates()).map(coordinate -> coordinateToScreeen(coordinate, renderingArea, res)).toArray(Coordinate[]::new);
+            coordinates.add(interioRingArrs);
+        }
+        return originalGeom.getFactory().createPolygon(originalGeom.getFactory().createLinearRing(exterioRingArrs), coordinates.stream().map(coords -> originalGeom.getFactory().createLinearRing(coords)).toArray(LinearRing[]::new));
     }
 
     private Coordinate coordinateToScreeen(Coordinate coordinate, ReferencedEnvelope renderingArea, double res) {

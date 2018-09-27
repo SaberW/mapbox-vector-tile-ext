@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 public class GeoJsonServicesImpl<T extends GeoEntity<ID>, ID extends Serializable> implements GeoJsonServices<T> {
     public GeometryConvert geometryConvert = new GeometryConvert();
     public WKBReader wkbReader = new WKBReader();
-    public WKBWriter wkbWriter = new WKBWriter();
+    public WKBWriter wkbWriter = new WKBWriter(2,true);
 
     public Feature toFeature(T t) {
         Feature feature = new Feature();
@@ -57,6 +57,7 @@ public class GeoJsonServicesImpl<T extends GeoEntity<ID>, ID extends Serializabl
         try {
             PGobject pGeobject = new PGobject();
             Geometry geometry = geometryConvert.geometryDeserialize(feature.getGeometry());
+            geometry.setSRID(4326);
             pGeobject.setValue(WKBWriter.toHex(wkbWriter.write(geometry)));
             pGeobject.setType("geometry");
             t.setShape(pGeobject);
