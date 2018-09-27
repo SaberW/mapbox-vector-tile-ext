@@ -1,22 +1,22 @@
 define(['map'], function (Map) {
     var map = Map.map, projection = Map.projection, select, tempLayer = Map.tempLayer, regionCounty,waterLine,poiVillage, vectorTileGrid;
 
-    regionCounty = new ol.layer.VectorTile({
-        renderMode: "image",
-        preload: 12,
-        source: new ol.source.VectorTile({
-            format: new ol.format.MVT(),
-            url: contextPath + '/geoserver/vt/{z}/{x}/{-y}.mvt?layerName=region_county',
-            projection: projection,
-            extent: ol.proj.get("EPSG:4326").getExtent(),
-            tileSize: 256,
-            maxZoom: 21,
-            minZoom: 0,
-            wrapX: true
-        })
-    })
-
-    map.addLayer(regionCounty);
+    // regionCounty = new ol.layer.VectorTile({
+    //     renderMode: "image",
+    //     preload: 12,
+    //     source: new ol.source.VectorTile({
+    //         format: new ol.format.MVT(),
+    //         url: contextPath + '/geoserver/vt/{z}/{x}/{-y}.mvt?layerName=region_county',
+    //         projection: projection,
+    //         extent: ol.proj.get("EPSG:4326").getExtent(),
+    //         tileSize: 256,
+    //         maxZoom: 21,
+    //         minZoom: 0,
+    //         wrapX: true
+    //     })
+    // })
+    //
+    // map.addLayer(regionCounty);
 
     waterLine = new ol.layer.VectorTile({
         renderMode: "image",
@@ -34,28 +34,28 @@ define(['map'], function (Map) {
     })
 
     map.addLayer(waterLine);
-
-    poiVillage = new ol.layer.VectorTile({
-        renderMode: "image",
-        preload: 12,
-        source: new ol.source.VectorTile({
-            format: new ol.format.MVT(),
-            url: contextPath + '/geoserver/vt/{z}/{x}/{-y}.mvt?layerName=poi_village',
-            projection: projection,
-            extent: ol.proj.get("EPSG:4326").getExtent(),
-            tileSize: 256,
-            maxZoom: 21,
-            minZoom: 0,
-            wrapX: true
-        })
-    })
-
-    map.addLayer(poiVillage);
+    //
+    // poiVillage = new ol.layer.VectorTile({
+    //     renderMode: "image",
+    //     preload: 12,
+    //     source: new ol.source.VectorTile({
+    //         format: new ol.format.MVT(),
+    //         url: contextPath + '/geoserver/vt/{z}/{x}/{-y}.mvt?layerName=poi_village',
+    //         projection: projection,
+    //         extent: ol.proj.get("EPSG:4326").getExtent(),
+    //         tileSize: 256,
+    //         maxZoom: 21,
+    //         minZoom: 0,
+    //         wrapX: true
+    //     })
+    // })
+    //
+    // map.addLayer(poiVillage);
 
     vectorTileGrid = new ol.layer.Tile({
         source: new ol.source.TileDebug({
             projection: 'EPSG:3857',
-            tileGrid: regionCounty.getSource().getTileGrid()
+            tileGrid: waterLine.getSource().getTileGrid()
         }),
         style: new ol.style.Style({
             stroke: new ol.style.Stroke({

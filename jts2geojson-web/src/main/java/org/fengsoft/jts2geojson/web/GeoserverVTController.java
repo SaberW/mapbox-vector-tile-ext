@@ -140,7 +140,7 @@ public class GeoserverVTController {
                     Style style = styleFactory.createStyle();
                     FeatureLayer featureLayer = new FeatureLayer(featureCollection, style, layerName);
                     mapContent.addLayer(featureLayer);
-                    ((VectorTileMapOutputFormat) format).setClipToMapBounds(true);
+                    ((VectorTileMapOutputFormat) format).setClipToMapBounds(false);
                     ((VectorTileMapOutputFormat) format).setTransformToScreenCoordinates(true);
                     byte[] res = format.produceMap(mapContent, crs);
 
