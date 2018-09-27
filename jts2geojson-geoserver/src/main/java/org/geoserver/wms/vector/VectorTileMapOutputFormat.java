@@ -9,24 +9,30 @@ import org.geoserver.platform.ServiceException;
 import org.geoserver.wms.MapProducerCapabilities;
 import org.geoserver.wms.WMSMapContent;
 import org.geoserver.wms.map.AbstractMapOutputFormat;
+import org.geotools.data.FeatureSource;
+import org.geotools.data.Query;
+import org.geotools.factory.Hints;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.Layer;
+import org.geotools.renderer.lite.VectorMapRenderUtils;
 import org.geotools.util.logging.Logging;
-import org.locationtech.jts.geom.*;
-import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.Geometry;
 import org.opengis.feature.*;
+import org.opengis.feature.type.GeometryDescriptor;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import java.awt.*;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static org.geotools.renderer.lite.VectorMapRenderUtils.getStyleQuery;
 
 public class VectorTileMapOutputFormat extends AbstractMapOutputFormat {
 
@@ -37,50 +43,77 @@ public class VectorTileMapOutputFormat extends AbstractMapOutputFormat {
 
     private final VectorTileBuilderFactory tileBuilderFactory;
 
-    private boolean clipToMapBounds = true;
+    private boolean clipToMapBounds;
 
     private double overSamplingFactor = 2.0; // 1=no oversampling, 4=four time oversample (generialization will be 1/4 pixel)
 
-    private boolean transformToScreenCoordinates = true;
+    private boolean transformToScreenCoordinates;
 
     public VectorTileMapOutputFormat(VectorTileBuilderFactory tileBuilderFactory) {
         super(tileBuilderFactory.getMimeType(), tileBuilderFactory.getOutputFormats());
         this.tileBuilderFactory = tileBuilderFactory;
     }
 
+    /**
+     * Multiplies density of simplification from its base value.
+     *
+     * @param factor
+     */
+    public void setOverSamplingFactor(double factor) {
+        this.overSamplingFactor = factor;
+    }
+
+    /**
+     * Does this format use features clipped to the extent of the tile instead of whole features
+     *
+     * @param clip
+     */
+    public void setClipToMapBounds(boolean clip) {
+        this.clipToMapBounds = clip;
+    }
+
+    /**
+     * Does this format use screen coordinates
+     */
+    public void setTransformToScreenCoordinates(boolean useScreenCoords) {
+        this.transformToScreenCoordinates = useScreenCoords;
+    }
+
     @Override
-    public byte[] produceMap(final WMSMapContent mapContent, List<Layer> layers, CoordinateReferenceSystem sourceCrs) throws ServiceException, IOException {
+    public byte[] produceMap(final WMSMapContent mapContent, CoordinateReferenceSystem coordinateReferenceSystem) throws ServiceException, IOException {
         final ReferencedEnvelope renderingArea = mapContent.getRenderingArea();
         final Rectangle paintArea = new Rectangle(mapContent.getMapWidth(), mapContent.getMapHeight());
 
         VectorTileBuilder vectorTileBuilder;
         vectorTileBuilder = this.tileBuilderFactory.newBuilder(paintArea, renderingArea);
 
-        double res = renderingArea.getWidth() * 3600.0 / 256.0;
-
-        for (Layer layer : layers) {
-            int buffer = mapContent.getBuffer();
-            Pipeline pipeline = null;
-            try {
-                pipeline = getPipeline(renderingArea, paintArea, sourceCrs, buffer);
-            } catch (FactoryException e) {
-                e.printStackTrace();
+        CoordinateReferenceSystem sourceCrs;
+        for (Layer layer : mapContent.layers()) {
+            FeatureSource<?, ?> featureSource = layer.getFeatureSource();
+            GeometryDescriptor geometryDescriptor = featureSource.getSchema().getGeometryDescriptor();
+            if (null == geometryDescriptor) {
+                continue;
             }
-            FeatureCollection<?, ?> features = layer.getFeatureSource().getFeatures();
 
-            run(features, pipeline, vectorTileBuilder, layer, res, renderingArea);
+            sourceCrs = geometryDescriptor.getType().getCoordinateReferenceSystem();
+            int buffer = VectorMapRenderUtils.getComputedBuffer(mapContent.getBuffer(), VectorMapRenderUtils.getFeatureStyles(layer, paintArea, VectorMapRenderUtils.getMapScale(mapContent, renderingArea), featureSource.getSchema()));
+            Pipeline pipeline = getPipeline(mapContent, renderingArea, paintArea, sourceCrs, buffer);
+
+            Query query = getStyleQuery(layer, mapContent);
+            query.getHints().remove(Hints.SCREENMAP);
+            FeatureCollection<?, ?> features = featureSource.getFeatures(query);
+            run(layer.getFeatureSource().getFeatures(), pipeline, geometryDescriptor, vectorTileBuilder, layer);
         }
-
         return vectorTileBuilder.build();
     }
 
-    protected Pipeline getPipeline(final ReferencedEnvelope renderingArea, final Rectangle paintArea, CoordinateReferenceSystem sourceCrs, int buffer) throws FactoryException {
+    protected Pipeline getPipeline(final WMSMapContent mapContent, final ReferencedEnvelope renderingArea, final Rectangle paintArea, CoordinateReferenceSystem sourceCrs, int buffer) {
         Pipeline pipeline;
         try {
             final PipelineBuilder builder = PipelineBuilder.newBuilder(renderingArea, paintArea, sourceCrs, overSamplingFactor, buffer);
             pipeline = builder.preprocess().transform(transformToScreenCoordinates).simplify(transformToScreenCoordinates).clip(clipToMapBounds, transformToScreenCoordinates).collapseCollections().build();
         } catch (FactoryException e) {
-            throw e;
+            throw new ServiceException(e);
         }
         return pipeline;
     }
@@ -92,7 +125,6 @@ public class VectorTileMapOutputFormat extends AbstractMapOutputFormat {
                 continue;
             }
             String name = p.getName().getLocalPart();
-            if (name.equalsIgnoreCase("shape")) continue;
             Object value;
             if (p instanceof ComplexAttribute) {
                 value = getProperties((ComplexAttribute) p);
@@ -106,7 +138,7 @@ public class VectorTileMapOutputFormat extends AbstractMapOutputFormat {
         return props;
     }
 
-    void run(FeatureCollection<?, ?> features, Pipeline pipeline, VectorTileBuilder vectorTileBuilder, Layer layer, double res, ReferencedEnvelope renderingArea) {
+    void run(FeatureCollection<?, ?> features, Pipeline pipeline, GeometryDescriptor geometryDescriptor, VectorTileBuilder vectorTileBuilder, Layer layer) {
         Stopwatch sw = Stopwatch.createStarted();
         int count = 0;
         int total = 0;
@@ -118,39 +150,10 @@ public class VectorTileMapOutputFormat extends AbstractMapOutputFormat {
                 total++;
                 Geometry originalGeom;
                 Geometry finalGeom;
+
                 originalGeom = (Geometry) feature.getDefaultGeometryProperty().getValue();
                 try {
-                    if (originalGeom.getGeometryType().equalsIgnoreCase("Point"))
-                        finalGeom = originalGeom.getFactory().createPoint(coordinateToScreeen(originalGeom.getCoordinate(), renderingArea, res));
-                    else if (originalGeom.getGeometryType().equalsIgnoreCase("MultiPoint")) {
-                        MultiPoint multiPoint = (MultiPoint) originalGeom;
-                        Point[] points = new Point[multiPoint.getNumGeometries()];
-                        for (int i = 0; i < multiPoint.getNumGeometries(); i++) {
-                            points[i] = originalGeom.getFactory().createPoint(coordinateToScreeen(multiPoint.getGeometryN(i).getCoordinate(), renderingArea, res));
-                        }
-                        finalGeom = originalGeom.getFactory().createMultiPoint(points);
-                    } else if (originalGeom.getGeometryType().equalsIgnoreCase("LineString")) {
-                        finalGeom = lineStringToScreen((LineString) originalGeom,renderingArea,res);
-                    } else if (originalGeom.getGeometryType().equalsIgnoreCase("MultiLineString")) {
-                        MultiLineString multiLineString = (MultiLineString) originalGeom;
-                        LineString[] lineStrings = new LineString[multiLineString.getNumGeometries()];
-                        for (int i = 0; i < multiLineString.getNumGeometries(); i++) {
-                            lineStrings[i] = lineStringToScreen((LineString) multiLineString.getGeometryN(i),renderingArea,res);
-                        }
-                        finalGeom = originalGeom.getFactory().createMultiLineString(lineStrings);
-                    } else if (originalGeom.getGeometryType().equalsIgnoreCase("Polygon")) {
-                        finalGeom = polygonToScreen((Polygon) originalGeom, renderingArea, res);
-                    } else if(originalGeom.getGeometryType().equalsIgnoreCase("MultiPolygon")){
-                        MultiPolygon multiPolygon = (MultiPolygon) originalGeom;
-                        Polygon[] polygons = new Polygon[multiPolygon.getNumGeometries()];
-                        for (int i = 0; i < multiPolygon.getNumGeometries(); i++) {
-                            polygons[i] = polygonToScreen((Polygon) multiPolygon.getGeometryN(i), renderingArea, res);
-                        }
-                        finalGeom = originalGeom.getFactory().createMultiPolygon(polygons);
-                    }else
-                        finalGeom = pipeline.execute(originalGeom);
-//                    公式：X = (lon - minLon)*3600/scaleX；
-//                    公式：Y = (maxLat - lat)*3600/scaleY；
+                    finalGeom = pipeline.execute(originalGeom);
                 } catch (Exception processingException) {
                     processingException.printStackTrace();
                     continue;
@@ -161,9 +164,10 @@ public class VectorTileMapOutputFormat extends AbstractMapOutputFormat {
 
                 final String layerName = feature.getName().getLocalPart();
                 final String featureId = feature.getIdentifier().toString();
-                final String geometryName = "shape";
+                final String geometryName = geometryDescriptor.getName().getLocalPart();
 
                 final Map<String, Object> properties = getProperties(feature);
+                properties.put("shape", null);
 
                 vectorTileBuilder.addFeature(layerName, featureId, geometryName, finalGeom, properties);
                 count++;
@@ -172,27 +176,9 @@ public class VectorTileMapOutputFormat extends AbstractMapOutputFormat {
         sw.stop();
         if (LOGGER.isLoggable(Level.FINE)) {
             String msg = String.format("Added %,d out of %,d features of '%s' in %s", count, total, layer.getTitle(), sw);
+            // System.err.println(msg);
             LOGGER.fine(msg);
         }
-    }
-
-    private LineString lineStringToScreen(LineString originalGeom, ReferencedEnvelope renderingArea, double res) {
-        Coordinate[] exterioRingArrs = Arrays.stream(originalGeom.getCoordinates()).map(coordinate -> coordinateToScreeen(coordinate, renderingArea, res)).toArray(Coordinate[]::new);
-        return originalGeom.getFactory().createLineString(exterioRingArrs);
-    }
-
-    private Polygon polygonToScreen(Polygon originalGeom, ReferencedEnvelope renderingArea, double res) {
-        Coordinate[] exterioRingArrs = Arrays.stream(originalGeom.getExteriorRing().getCoordinates()).map(coordinate -> coordinateToScreeen(coordinate, renderingArea, res)).toArray(Coordinate[]::new);
-        List<Coordinate[]> coordinates = new ArrayList<>();
-        for (int i = 0; i < originalGeom.getNumInteriorRing(); i++) {
-            Coordinate[] interioRingArrs = Arrays.stream(originalGeom.getInteriorRingN(i).getCoordinates()).map(coordinate -> coordinateToScreeen(coordinate, renderingArea, res)).toArray(Coordinate[]::new);
-            coordinates.add(interioRingArrs);
-        }
-        return originalGeom.getFactory().createPolygon(originalGeom.getFactory().createLinearRing(exterioRingArrs), coordinates.stream().map(coords -> originalGeom.getFactory().createLinearRing(coords)).toArray(LinearRing[]::new));
-    }
-
-    private Coordinate coordinateToScreeen(Coordinate coordinate, ReferencedEnvelope renderingArea, double res) {
-        return new Coordinate((coordinate.getX() - renderingArea.getMinX()) * 3600.0 / res, (renderingArea.getMaxY() - coordinate.getY()) * 3600.0 / res, 0);
     }
 
     /**

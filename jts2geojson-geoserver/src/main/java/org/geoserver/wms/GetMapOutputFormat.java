@@ -26,7 +26,7 @@ public interface GetMapOutputFormat {
      * @param mapContent
      * @throws ServiceException something goes wrong
      */
-    public byte[] produceMap(WMSMapContent mapContent, List<Layer> layers, CoordinateReferenceSystem coordinateReferenceSystem) throws ServiceException, IOException;
+    public byte[] produceMap(WMSMapContent mapContent, CoordinateReferenceSystem coordinateReferenceSystem) throws ServiceException, IOException;
 
     /**
      * Returns the list of content type aliases for this output format, that are the ones to be used

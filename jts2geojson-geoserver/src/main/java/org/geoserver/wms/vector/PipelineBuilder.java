@@ -48,7 +48,8 @@ class PipelineBuilder {
 
         MathTransform sourceToScreen;
 
-        ReferencedEnvelope renderingArea; // WMS request; bounding box - in final map (target) CRS (BBOX from WMS)
+        ReferencedEnvelope renderingArea; // WMS request; bounding box - in final map (target) CRS (BBOX from
+        // WMS)
 
         Rectangle paintArea; // WMS request; rectangle of the image (width and height from WMS)
 
@@ -115,8 +116,7 @@ class PipelineBuilder {
         try {
             MathTransform screenToWorld = context.sourceToScreen.inverse();
 
-            // 0.8px is used to make sure the generalization isn't too much (doesn't make visible
-            // changes)
+            // 0.8px is used to make sure the generalization isn't too much (doesn't make visible changes)
             spans_sourceCRS = Decimator.computeGeneralizationDistances(screenToWorld, context.paintArea, 0.8);
 
             spans_targetCRS = Decimator.computeGeneralizationDistances(context.targetToScreen.inverse(), context.paintArea, 1.0);
@@ -124,6 +124,7 @@ class PipelineBuilder {
             // to be the larger of the two spans
             // so we are getting at least A pixels around.
             context.pixelSizeInTargetCRS = Math.max(spans_targetCRS[0], spans_targetCRS[1]);
+
         } catch (TransformException e) {
             throw Throwables.propagate(e);
         }

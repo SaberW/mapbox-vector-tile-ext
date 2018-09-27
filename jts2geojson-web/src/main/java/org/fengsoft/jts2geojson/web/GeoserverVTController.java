@@ -10,7 +10,7 @@ import org.geoserver.wms.WMSMapContent;
 import org.geoserver.wms.mapbox.MapBoxTileBuilderFactory;
 import org.geoserver.wms.vector.VectorTileMapOutputFormat;
 import org.geotools.data.collection.ListFeatureCollection;
-import org.geotools.feature.FeatureCollections;
+import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.NameImpl;
 import org.geotools.feature.simple.SimpleFeatureImpl;
 import org.geotools.feature.simple.SimpleFeatureTypeImpl;
@@ -21,9 +21,13 @@ import org.geotools.feature.type.GeometryTypeImpl;
 import org.geotools.filter.identity.FeatureIdImpl;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.FeatureLayer;
-import org.geotools.map.Layer;
 import org.geotools.map.MapViewport;
 import org.geotools.referencing.CRS;
+import org.geotools.referencing.crs.DefaultGeographicCRS;
+import org.geotools.styling.Style;
+import org.geotools.styling.StyleFactory;
+import org.geotools.styling.StyleFactoryImpl;
+import org.geotools.styling.StyleImpl;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKBReader;
@@ -83,19 +87,10 @@ public class GeoserverVTController {
      * @param z
      * @return
      */
-    @RequestMapping(value = "vt/{z}/{x}/{y}.mvt",
-            method = {RequestMethod.POST, RequestMethod.GET},
-            produces = MediaType.APPLICATION_OCTET_STREAM_VALUE
-    )
-    public String getLine2(@RequestParam("layerName") String layerName,
-                           @PathVariable("x") Integer x,
-                           @PathVariable("y") Integer y,
-                           @PathVariable("z") Integer z) {
+    @RequestMapping(value = "vt/{z}/{x}/{y}.mvt", method = RequestMethod.GET, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public String getLine2(@RequestParam("layerName") String layerName, @PathVariable("x") Integer x, @PathVariable("y") Integer y, @PathVariable("z") Integer z) {
         File parentFile = new File(cachePath + File.separator + layerName);
         if (!parentFile.exists()) parentFile.mkdir();
-
-        //y = (int) Math.pow(2, z) - 1 - y;//TMS转XYZ
-//        y = (1 << z) - y - 1;//将XYZ 转为 TMS
 
         File file = new File(cachePath + File.separator + layerName, String.format("%d-%d-%d", z, x, y) + ".mvt");
         if (!file.exists()) {
@@ -107,12 +102,11 @@ public class GeoserverVTController {
             WMSMapContent mapContent = new WMSMapContent(256, 256, 256, 0, 32);
 
             try {
-                CoordinateReferenceSystem crs = CRS.decode("EPSG:4326");
+                CoordinateReferenceSystem crs = DefaultGeographicCRS.WGS84;
                 ReferencedEnvelope envelope = new ReferencedEnvelope(bboxs[1], bboxs[3], bboxs[0], bboxs[2], crs);
                 mapContent.setViewport(new MapViewport(envelope));
 
 
-                ListFeatureCollection featureCollection = new ListFeatureCollection(FeatureCollections.newCollection());
                 List<AttributeDescriptor> attributeDescriptors = new ArrayList<>();
                 AtomicReference<SimpleFeatureTypeImpl> featureType = new AtomicReference<>();
                 AtomicReference<GeometryDescriptor> geometryDescriptor = new AtomicReference<>();
@@ -133,16 +127,22 @@ public class GeoserverVTController {
                 });
                 featureType.set(new SimpleFeatureTypeImpl(new NameImpl("feature"), attributeDescriptors, geometryDescriptor.get(), false, null, null, null));
 
+                SimpleFeatureCollection featureCollection = new ListFeatureCollection(featureType.get());
+
 
                 regionCountyList.forEach(regionCounty -> {
                     SimpleFeature feature = new SimpleFeatureImpl(transBean2Map(regionCounty, fields), featureType.get(), new FeatureIdImpl(String.valueOf(regionCounty.getId())));
-                    featureCollection.add(feature);
+                    ((ListFeatureCollection) featureCollection).add(feature);
                 });
 
                 if (regionCountyList.size() > 0) {
-                    List<Layer> layers = new ArrayList<>();
-                    layers.add(new FeatureLayer(featureCollection, null, layerName));
-                    byte[] res = format.produceMap(mapContent, layers, crs);
+                    StyleFactory styleFactory = new StyleFactoryImpl();
+                    Style style = styleFactory.createStyle();
+                    FeatureLayer featureLayer = new FeatureLayer(featureCollection, style, layerName);
+                    mapContent.addLayer(featureLayer);
+                    ((VectorTileMapOutputFormat) format).setClipToMapBounds(true);
+                    ((VectorTileMapOutputFormat) format).setTransformToScreenCoordinates(true);
+                    byte[] res = format.produceMap(mapContent, crs);
 
                     FileOutputStream fos = new FileOutputStream(file);
                     fos.write(res, 0, res.length);
@@ -152,20 +152,12 @@ public class GeoserverVTController {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
-            } catch (NoSuchAuthorityCodeException e) {
-                e.printStackTrace();
-            } catch (FactoryException e) {
-                e.printStackTrace();
             }
         }
         return "forward:/geoserver/download/" + layerName + "/" + file.getName();
     }
 
-    @RequestMapping(
-            value = "download/{layerName}/{fileName}",
-            method = {RequestMethod.GET, RequestMethod.POST},
-            produces = MediaType.APPLICATION_OCTET_STREAM_VALUE
-    )
+    @RequestMapping(value = "download/{layerName}/{fileName}", method = RequestMethod.GET, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<InputStreamResource> downloadFile(@PathVariable(value = "layerName") String layerName, @PathVariable(value = "fileName") String fileName) throws IOException {
         String filePath = cachePath + File.separator + layerName + File.separator + fileName;
         if (new File(filePath).exists()) {

@@ -108,16 +108,8 @@ define(['map'], function (Map) {
             tempLayer.getSource().dispatchEvent("addfeature");
         }
     })
-
     map.on("click",function (event) {
         console.log(event.coordinate)
     })
     map.addInteraction(select);
-    map.on('pointerdrag', function (evt) {
-        // select.setActive(false);
-    });
-    //事件：地图移动结束
-    map.on('moveend', function (evt) {
-        // select.setActive(true);
-    });
 })
