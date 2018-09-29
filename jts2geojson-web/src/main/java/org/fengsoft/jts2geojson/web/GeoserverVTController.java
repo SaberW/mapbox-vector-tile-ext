@@ -2,9 +2,11 @@ package org.fengsoft.jts2geojson.web;
 
 import org.beetl.sql.core.SQLManager;
 import org.beetl.sql.core.SQLReady;
+import org.fengsoft.geojson.common.GeoEntity;
 import org.fengsoft.geojson.common.GlobalGeodetic;
 import org.fengsoft.geojson.common.GlobalMercator;
 import org.fengsoft.geojson.entity.RegionCounty;
+import org.fengsoft.jts2geojson.common.Underline2Camel;
 import org.geoserver.wms.GetMapOutputFormat;
 import org.geoserver.wms.WMSMapContent;
 import org.geoserver.wms.mapbox.MapBoxTileBuilderFactory;
@@ -28,6 +30,7 @@ import org.geotools.styling.Style;
 import org.geotools.styling.StyleFactory;
 import org.geotools.styling.StyleFactoryImpl;
 import org.geotools.styling.StyleImpl;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKBReader;
@@ -40,6 +43,7 @@ import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.NoSuchAuthorityCodeException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.postgresql.util.PGobject;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -95,66 +99,89 @@ public class GeoserverVTController {
         File file = new File(cachePath + File.separator + layerName, String.format("%d-%d-%d", z, x, y) + ".mvt");
         if (!file.exists()) {
             double[] bboxs = globalGeodetic.tileLatLonBounds(x, y, z);
-            String sql = "SELECT t.* FROM " + layerName + " t  WHERE ST_Intersects (shape,ST_MakeEnvelope(" + bboxs[1] + "," + bboxs[0] + "," + bboxs[3] + "," + bboxs[2] + ",4326))";
-
-            List<RegionCounty> regionCountyList = sqlManager.execute(new SQLReady(sql), RegionCounty.class);
+            CoordinateReferenceSystem crs = DefaultGeographicCRS.WGS84;
+            ReferencedEnvelope envelope = new ReferencedEnvelope(bboxs[1], bboxs[3], bboxs[0], bboxs[2], crs);
             GetMapOutputFormat format = new VectorTileMapOutputFormat(new MapBoxTileBuilderFactory());
             WMSMapContent mapContent = new WMSMapContent(256, 256, 256, 0, 32);
+            mapContent.setViewport(new MapViewport(envelope));
+
+            List<FeatureLayer> layers = buildFeatureLayers(layerName, bboxs, crs);
+            layers.forEach(lyr -> mapContent.addLayer(lyr));
+
+            ((VectorTileMapOutputFormat) format).setClipToMapBounds(false);
+            ((VectorTileMapOutputFormat) format).setTransformToScreenCoordinates(true);
 
             try {
-                CoordinateReferenceSystem crs = DefaultGeographicCRS.WGS84;
-                ReferencedEnvelope envelope = new ReferencedEnvelope(bboxs[1], bboxs[3], bboxs[0], bboxs[2], crs);
-                mapContent.setViewport(new MapViewport(envelope));
+                byte[] res = format.produceMap(mapContent, crs);
 
-
-                List<AttributeDescriptor> attributeDescriptors = new ArrayList<>();
-                AtomicReference<SimpleFeatureTypeImpl> featureType = new AtomicReference<>();
-                AtomicReference<GeometryDescriptor> geometryDescriptor = new AtomicReference<>();
-                List<Field> fields = new ArrayList<>();
-                ReflectionUtils.doWithFields(RegionCounty.class, field -> {
-                    AttributeType type = null;
-                    if (field.getName().equalsIgnoreCase("id")) {
-                        type = new AttributeTypeImpl(new NameImpl(field.getName()), field.getType(), true, false, null, null, null);
-                    } else if (field.getName().equalsIgnoreCase("shape")) {
-                        type = new GeometryTypeImpl(new NameImpl("shape"), Polygon.class, crs, false, false, null, null, null);
-                        geometryDescriptor.set(new GeometryDescriptorImpl((GeometryType) type, new NameImpl("shape"), 0, 0, false, null));
-                    } else {
-                        type = new AttributeTypeImpl(new NameImpl(field.getName()), field.getType(), false, false, null, null, null);
-                    }
-                    attributeDescriptors.add(new AttributeDescriptorImpl(type, new NameImpl(field.getName()), 0, 0, false, null));
-
-                    fields.add(field);
-                });
-                featureType.set(new SimpleFeatureTypeImpl(new NameImpl("feature"), attributeDescriptors, geometryDescriptor.get(), false, null, null, null));
-
-                SimpleFeatureCollection featureCollection = new ListFeatureCollection(featureType.get());
-
-
-                regionCountyList.forEach(regionCounty -> {
-                    SimpleFeature feature = new SimpleFeatureImpl(transBean2Map(regionCounty, fields), featureType.get(), new FeatureIdImpl(String.valueOf(regionCounty.getId())));
-                    ((ListFeatureCollection) featureCollection).add(feature);
-                });
-
-                if (regionCountyList.size() > 0) {
-                    StyleFactory styleFactory = new StyleFactoryImpl();
-                    Style style = styleFactory.createStyle();
-                    FeatureLayer featureLayer = new FeatureLayer(featureCollection, style, layerName);
-                    mapContent.addLayer(featureLayer);
-                    ((VectorTileMapOutputFormat) format).setClipToMapBounds(false);
-                    ((VectorTileMapOutputFormat) format).setTransformToScreenCoordinates(true);
-                    byte[] res = format.produceMap(mapContent, crs);
-
-                    FileOutputStream fos = new FileOutputStream(file);
-                    fos.write(res, 0, res.length);
-                    fos.flush();
-                    fos.close();
-                    mapContent.dispose();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
+                FileOutputStream fos = new FileOutputStream(file);
+                fos.write(res, 0, res.length);
+                fos.flush();
+                fos.close();
+                mapContent.dispose();
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
         }
         return "forward:/geoserver/download/" + layerName + "/" + file.getName();
+    }
+
+    private List<FeatureLayer> buildFeatureLayers(String layerName, double[] bboxs, CoordinateReferenceSystem crs) {
+        List<FeatureLayer> featureLayers = new ArrayList<>();
+
+        List<String> lyrNames = new ArrayList<>();
+        if (layerName.equalsIgnoreCase("baseLayer")) {
+            lyrNames.add("poi_village");
+            lyrNames.add("water_line");
+            lyrNames.add("region_county");
+        } else lyrNames.add("layerName");
+
+        lyrNames.forEach(lyr -> {
+            String sql = "SELECT t.* FROM " + lyr + " t  WHERE ST_Intersects (shape,ST_MakeEnvelope(" + bboxs[1] + "," + bboxs[0] + "," + bboxs[3] + "," + bboxs[2] + ",4326))";
+            String className = Underline2Camel.underline2Camel(lyr, false);
+
+            try {
+                Class clazz = Class.forName("org.fengsoft.geojson.entity." + className);
+                List<GeoEntity> entityList = sqlManager.execute(new SQLReady(sql), clazz);
+
+                if (entityList.size() > 0) {
+                    List<AttributeDescriptor> attributeDescriptors = new ArrayList<>();
+                    AtomicReference<SimpleFeatureTypeImpl> featureType = new AtomicReference<>();
+                    AtomicReference<GeometryDescriptor> geometryDescriptor = new AtomicReference<>();
+                    List<Field> fields = new ArrayList<>();
+                    ReflectionUtils.doWithFields(RegionCounty.class, field -> {
+                        AttributeType type = null;
+                        if (field.getName().equalsIgnoreCase("id")) {
+                            type = new AttributeTypeImpl(new NameImpl(field.getName()), field.getType(), true, false, null, null, null);
+                        } else if (field.getName().equalsIgnoreCase("shape")) {
+                            type = new GeometryTypeImpl(new NameImpl("shape"), Geometry.class, crs, false, false, null, null, null);
+                            geometryDescriptor.set(new GeometryDescriptorImpl((GeometryType) type, new NameImpl("shape"), 0, 0, false, null));
+                        } else {
+                            type = new AttributeTypeImpl(new NameImpl(field.getName()), field.getType(), false, false, null, null, null);
+                        }
+                        attributeDescriptors.add(new AttributeDescriptorImpl(type, new NameImpl(field.getName()), 0, 0, false, null));
+
+                        fields.add(field);
+                    });
+                    featureType.set(new SimpleFeatureTypeImpl(new NameImpl("feature"), attributeDescriptors, geometryDescriptor.get(), false, null, null, null));
+
+                    SimpleFeatureCollection featureCollection = new ListFeatureCollection(featureType.get());
+                    entityList.forEach(entity -> {
+                        SimpleFeature feature = new SimpleFeatureImpl(transBean2Map(entity, fields), featureType.get(), new FeatureIdImpl(String.valueOf(entity.getId())));
+                        ((ListFeatureCollection) featureCollection).add(feature);
+                    });
+
+                    StyleFactory styleFactory = new StyleFactoryImpl();
+                    Style style = styleFactory.createStyle();
+                    featureLayers.add(new FeatureLayer(featureCollection, style, lyr));
+                }
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        });
+
+
+        return featureLayers;
     }
 
     @RequestMapping(value = "download/{layerName}/{fileName}", method = RequestMethod.GET, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)

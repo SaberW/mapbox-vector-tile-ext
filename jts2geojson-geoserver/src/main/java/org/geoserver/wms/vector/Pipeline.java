@@ -9,25 +9,27 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 
-/** A chainable unary operation on a geometry. */
+/**
+ * A chainable unary operation on a geometry.
+ */
 abstract class Pipeline {
 
     protected static final Geometry EMPTY = new GeometryFactory().createPoint((Coordinate) null);
 
-    /** Pipeline terminator which returns the geometry without change. */
-    static final Pipeline END =
-            new Pipeline() {
+    /**
+     * Pipeline terminator which returns the geometry without change.
+     */
+    static final Pipeline END = new Pipeline() {
+        @Override
+        protected final Geometry execute(Geometry geom) {
+            return geom;
+        }
 
-                @Override
-                protected final Geometry execute(Geometry geom) {
-                    return geom;
-                }
-
-                @Override
-                protected final Geometry _run(Geometry geom) {
-                    throw new UnsupportedOperationException();
-                }
-            };
+        @Override
+        protected final Geometry _run(Geometry geom) {
+            throw new UnsupportedOperationException();
+        }
+    };
 
     private Pipeline next = END;
 

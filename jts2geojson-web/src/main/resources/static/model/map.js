@@ -79,10 +79,10 @@ define(function () {
         projection: projection
     })
 
-    map.getView().fit([97.528656, 21.142703, 106.196712, 29.251325], map.getSize());
+    // map.getView().fit([97.528656, 21.142703, 106.196712, 29.251325], map.getSize());
 
-    // map.getView().setCenter([102.788704, 24.993415]);
-    // map.getView().setZoom(16);
+    map.getView().setCenter([102.788704, 24.993415]);
+    map.getView().setZoom(15);
 
     return {
         map: map,

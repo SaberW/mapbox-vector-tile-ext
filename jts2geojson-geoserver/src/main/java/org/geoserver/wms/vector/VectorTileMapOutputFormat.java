@@ -23,10 +23,8 @@ import org.opengis.feature.*;
 import org.opengis.feature.type.GeometryDescriptor;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-
 import java.awt.*;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
